@@ -1,0 +1,2 @@
+add "processing video" after video is recorded.
+make sure the singleTap listens properly for a proper amount of time.

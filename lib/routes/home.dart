@@ -35,7 +35,8 @@ class _AssistHomePageState extends State<AssistHomePage> {
   Timer? _tapTimer;
   int _tapCount = 0;
 
-  final Map<String, dynamic> _sessionContext = {};
+  // Changed to conversation history
+  List<Map<String, dynamic>> _conversationHistory = [];
 
   bool _isListening = false;
 
@@ -44,7 +45,6 @@ class _AssistHomePageState extends State<AssistHomePage> {
     super.initState();
     _initializeCamera();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Configure TTS to wait for completion
       await _flutterTts.awaitSpeakCompletion(true);
       
       final prefs = await SharedPreferences.getInstance();
@@ -52,12 +52,212 @@ class _AssistHomePageState extends State<AssistHomePage> {
 
       if (lang == "AR") {
         await _flutterTts.setLanguage("ar-SA");
-        await _flutterTts.speak("أنت الآن في الشاشة الرئيسية للمساعد.");
+        final greeting = "أنت الآن في الشاشة الرئيسية للمساعد.";
+        await _flutterTts.speak(greeting);
+        _addToHistory("assistant", greeting);
       } else {
         await _flutterTts.setLanguage("en-US");
-        await _flutterTts.speak("You are now on the assist home screen.");
+        final greeting = "You are now on the assist home screen.";
+        await _flutterTts.speak(greeting);
+        _addToHistory("assistant", greeting);
       }
     });
+  }
+
+  // Helper to add messages to history
+  void _addToHistory(String role, dynamic content) {
+    _conversationHistory.add({
+      "role": role,
+      "content": content
+    });
+  }
+  // Clear conversation history but keep initial greeting
+  void _clearConversationHistory() {
+    if (_conversationHistory.isNotEmpty) {
+      final initialGreeting = _conversationHistory.firstWhere(
+        (msg) => msg["role"] == "assistant" && 
+                 (msg["content"] == "أنت الآن في الشاشة الرئيسية للمساعد." || 
+                  msg["content"] == "You are now on the assist home screen."),
+        orElse: () => {},
+      );
+      
+      _conversationHistory.clear();
+      
+      if (initialGreeting.isNotEmpty) {
+        _conversationHistory.add(initialGreeting);
+      }
+    }
+  }
+
+  Future<void> _callFanarApi({required String query, File? image, File? videoFile}) async {
+    final uri = Uri.parse('https://api.fanar.qa/v1/chat/completions');
+    final headers = {
+      'Authorization': 'Bearer $apikey',
+      'Content-Type': 'application/json',
+    };
+
+    // Build content for current message
+    List<dynamic> currentContent = [
+      {"type": "text", "text": query}
+    ];
+
+    // Add media if exists
+    if (image != null) {
+      try {
+        final bytes = await image.readAsBytes();
+        final base64Image = base64Encode(bytes);
+        currentContent.add({
+          "type": "image_url",
+          "image_url": {"url": "data:image/jpeg;base64,$base64Image"}
+        });
+      } catch (e) {
+        print("Error encoding image: $e");
+        await _flutterTts.speak("Error processing image. Please try again.");
+        return;
+      }
+    } else if (videoFile != null) {
+      try {
+        final bytes = await videoFile.readAsBytes();
+        if (bytes.lengthInBytes > 5 * 1024 * 1024) { // 5MB limit
+          await _flutterTts.speak("Video file is too large. Please record a shorter video.");
+          return;
+        }
+        final base64Video = base64Encode(bytes);
+        currentContent.add({
+          "type": "video_url",
+          "video_url": {"url": "data:video/mp4;base64,$base64Video"}
+        });
+      } catch (e) {
+        print("Error encoding video: $e");
+        await _flutterTts.speak("Error processing video. Please try again.");
+        return;
+      }
+    }
+
+    // Add user message to conversation history
+    _addToHistory("user", currentContent);
+
+    // Prepare messages for API
+    List<Map<String, dynamic>> messages = [];
+
+    // Add conversation history in the correct format
+    for (var entry in _conversationHistory) {
+      messages.add({
+        "role": entry["role"],
+        "content": entry["content"]
+      });
+    }
+
+    final body = jsonEncode({
+      "model": "Fanar-Oryx-IVU-1",
+      "messages": messages,
+    });
+
+    try {
+      final response = await http.post(uri, headers: headers, body: body);
+      
+      if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body);
+        final reply = responseBody["choices"][0]["message"]["content"];
+        print("Fanar reply: $reply");
+        
+        // Add assistant response to conversation history
+        _addToHistory("assistant", reply);
+        
+        await _flutterTts.speak(reply);
+        print("✅ Conversation history length: ${_conversationHistory.length}");
+      } 
+      // Handle 400 error by clearing context
+      else if (response.statusCode == 400) {
+        print("API error 400: ${response.body}");
+        
+        // Clear conversation history
+        _clearConversationHistory();
+        
+        // Notify user
+        await _flutterTts.speak("I had trouble remembering our conversation. "
+            "I've cleared my memory. Could you please repeat your question?");
+        
+        // Retry without history
+        await _retryWithoutHistory(query: query, image: image, videoFile: videoFile);
+      }
+      else {
+        print("API error: ${response.statusCode} - ${response.body}");
+        await _flutterTts.speak("Sorry, I encountered an error. Please try again.");
+      }
+    } catch (e) {
+      print("API error: $e");
+      await _flutterTts.speak("Error connecting to the assistant service.");
+    }
+  }
+
+  Future<void> _retryWithoutHistory({required String query, File? image, File? videoFile}) async {
+    final uri = Uri.parse('https://api.fanar.qa/v1/chat/completions');
+    final headers = {
+      'Authorization': 'Bearer $apikey',
+      'Content-Type': 'application/json',
+    };
+
+    // Build content for current message only (no history)
+    List<dynamic> currentContent = [
+      {"type": "text", "text": query}
+    ];
+
+    // Add media if exists (reuse existing files)
+    if (image != null) {
+      try {
+        final bytes = await image.readAsBytes();
+        final base64Image = base64Encode(bytes);
+        currentContent.add({
+          "type": "image_url",
+          "image_url": {"url": "data:image/jpeg;base64,$base64Image"}
+        });
+      } catch (e) {
+        // Already handled in main call
+        return;
+      }
+    } else if (videoFile != null) {
+      try {
+        final bytes = await videoFile.readAsBytes();
+        final base64Video = base64Encode(bytes);
+        currentContent.add({
+          "type": "video_url",
+          "video_url": {"url": "data:video/mp4;base64,$base64Video"}
+        });
+      } catch (e) {
+        // Already handled in main call
+        return;
+      }
+    }
+
+    final body = jsonEncode({
+      "model": "Fanar-Oryx-IVU-1",
+      "messages": [
+        {
+          "role": "user",
+          "content": currentContent
+        }
+      ],
+    });
+
+    try {
+      final response = await http.post(uri, headers: headers, body: body);
+      if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body);
+        final reply = responseBody["choices"][0]["message"]["content"];
+        
+        // Add assistant response to conversation history
+        _addToHistory("assistant", reply);
+        
+        await _flutterTts.speak(reply);
+      } else {
+        print("Retry error: ${response.statusCode}");
+        await _flutterTts.speak("Still having trouble. Please try a different question.");
+      }
+    } catch (e) {
+      print("Retry error: $e");
+      await _flutterTts.speak("Error connecting to the assistant service.");
+    }
   }
 
 
@@ -183,7 +383,7 @@ class _AssistHomePageState extends State<AssistHomePage> {
             await _speech.stop();
             _isListening = false;
             setState(() {});
-            _sessionContext['last_question'] = query;
+            // _conversationHistory['last_question'] = query;
             await _callFanarApi(query: query);
           }
         },
@@ -197,7 +397,7 @@ class _AssistHomePageState extends State<AssistHomePage> {
           setState(() {});
           final lastWords = _speech.lastRecognizedWords;
           if (lastWords.isNotEmpty) {
-            _sessionContext['last_question'] = lastWords;
+            // _conversationHistory['last_question'] = lastWords;
             await _callFanarApi(query: lastWords);
           } else {
             await _flutterTts.speak("I couldn't hear your question. Please try again.");
@@ -257,7 +457,7 @@ class _AssistHomePageState extends State<AssistHomePage> {
             await _speech.stop();
             _isListening = false;
             setState(() {});
-            _sessionContext['last_question'] = query;
+            // _conversationHistory['last_question'] = query;
             await _callFanarApi(query: query, image: File(picture.path));
           }
         },
@@ -270,7 +470,7 @@ class _AssistHomePageState extends State<AssistHomePage> {
           setState(() {});
           final lastWords = _speech.lastRecognizedWords;
           if (lastWords.isNotEmpty) {
-            _sessionContext['last_question'] = lastWords;
+            // _conversationHistory['last_question'] = lastWords;
             await _callFanarApi(query: lastWords, image: File(picture.path));
           } else {
             await _flutterTts.speak("I couldn't hear your question. Please try again.");
@@ -385,77 +585,6 @@ class _AssistHomePageState extends State<AssistHomePage> {
     await _flutterTts.speak("Mode changed to $currentMode");
 
     // Removed wake word listening start
-  }
-
-  Future<void> _callFanarApi({required String query, File? image, File? videoFile}) async {
-    final uri = Uri.parse('https://api.fanar.qa/v1/chat/completions');
-    final headers = {
-      'Authorization': 'Bearer $apikey',
-      'Content-Type': 'application/json',
-    };
-
-    List content = [];
-
-    if (_sessionContext.isNotEmpty) {
-      content.add({
-        "type": "text",
-        "text": "Previous context: ${_sessionContext.entries.map((e) => '${e.key}: ${e.value}').join(', ')}",
-      });
-    }
-
-    content.add({
-      "type": "text",
-      "text": query,
-    });
-
-    if (image != null) {
-      final bytes = await image.readAsBytes();
-      final base64Image = base64Encode(bytes);
-      content.add({
-        "type": "image_url",
-        "image_url": {
-          "url": "data:image/jpeg;base64,$base64Image",
-        },
-      });
-    } else if (videoFile != null) {
-      final bytes = await videoFile.readAsBytes();
-      final base64Video = base64Encode(bytes);
-      content.add({
-        "type": "video_url",
-        "video_url": {
-          "url": "data:video/mp4;base64,$base64Video",
-        },
-      });
-    }
-
-    final body = jsonEncode({
-      "model": "Fanar-Oryx-IVU-1",
-      "messages": [
-        {
-          "role": "user",
-          "content": content,
-        },
-      ],
-    });
-
-    try {
-      _sessionContext['last_mode'] = currentMode;
-      _sessionContext['last_time'] = DateTime.now().toIso8601String();
-      final response = await http.post(uri, headers: headers, body: body);
-      if (response.statusCode == 200) {
-        final responseBody = jsonDecode(response.body);
-        final reply = responseBody["choices"][0]["message"]["content"];
-        print("Fanar reply: $reply");
-        await _flutterTts.speak(reply);
-        print("✅ Session context: $_sessionContext");
-      } else {
-        print("API error: ${response.statusCode}");
-        await _flutterTts.speak("Error: ${response.statusCode}");
-      }
-    } catch (e) {
-      print("API error: $e");
-      await _flutterTts.speak("Error connecting to Fanar API.");
-    }
   }
 
   @override
