@@ -15,6 +15,7 @@ class LanguageSelectionPage extends StatefulWidget {
 class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
   final stt.SpeechToText _speech = stt.SpeechToText();
   final FlutterTts flutterTts = FlutterTts();
+
   final String _welcomeMessageEn =
       "Welcome to AYN. Please select a language from the buttons given. Tap once to hear the language. Double tap to select.";
   final String _welcomeMessageAr =
@@ -37,14 +38,14 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
   }
 
   void startInactivityTimer() {
-    _inactivityTimer?.cancel(); // clear old timer
+    _inactivityTimer?.cancel();
     _inactivityTimer = Timer.periodic(const Duration(seconds: 45), (_) {
       speakInstructions();
     });
   }
 
   Future<void> speakInstructions() async {
-    _inactivityTimer?.cancel(); // Stop existing timer while speaking
+    _inactivityTimer?.cancel();
 
     await flutterTts.stop();
     await flutterTts.setSpeechRate(0.45);
@@ -54,18 +55,14 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
 
     await flutterTts.setLanguage("ar-SA");
     await flutterTts.speak(_welcomeMessageAr);
-    // Wait until Arabic speaking is done
     await Future.delayed(const Duration(milliseconds: 500));
 
     await flutterTts.setLanguage("en-US");
     await flutterTts.speak(_welcomeMessageEn);
-    // Wait for English to complete before starting timer
     await flutterTts.awaitSpeakCompletion(true);
 
-    // Now start the inactivity timer AFTER both instructions finish
     startInactivityTimer();
   }
-
 
   Future<void> setLanguage(String langCode) async {
     _inactivityTimer?.cancel();
@@ -82,7 +79,6 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
 
     await prefs.setBool("first_time", false);
 
-    // Ask if user wants instructions
     await flutterTts.setLanguage(langCode == 'EN' ? "en-US" : "ar-SA");
     await flutterTts.awaitSpeakCompletion(true);
     await flutterTts.speak(langCode == 'EN'
@@ -115,7 +111,6 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
     }
 
     bool wantsInstructions = false;
-
     if (langCode == 'EN') {
       wantsInstructions = resultText.contains("yes");
     } else {
@@ -125,7 +120,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
     if (wantsInstructions) {
       await flutterTts.awaitSpeakCompletion(true);
       await flutterTts.speak(langCode == 'EN'
-        ? '''
+          ? '''
         Instructions: 
         Triple tap anywhere to switch the camera. 
         Double tap to take a photo and ask your question.
@@ -133,7 +128,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
         After image or video is captured, you can ask a question using your voice.
         The assistant will describe what it sees and answer.
         '''
-                : '''
+          : '''
         التعليمات:
         انقر ثلاث مرات في أي مكان للتبديل بين الكاميرات.
         انقر مرتين لالتقاط صورة واطرح سؤالك.
@@ -152,46 +147,38 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
     context.go("/");
   }
 
-
   Widget languageButton(String label, String langCode) {
-    return Semantics(
-      label: label == "EN"
-          ? "Select English. Double tap to choose English language."
-          : "اختر العربية. انقر مرتين لاختيار اللغة العربية.",
-      button: true,
-      child: GestureDetector(
-        onTap: () async {
-          // Haptic feedback on single tap
-          Feedback.forTap(context);
+    String spokenLabel = label == "EN" ? "English" : "العربية";
+    String hint = label == "EN"
+        ? "Double tap to select English"
+        : "انقر مرتين لاختيار اللغة العربية";
 
-          await flutterTts.stop();
-          await flutterTts.awaitSpeakCompletion(true); // <-- must be before speaking
-          if (label == 'EN') {
-            await flutterTts.setLanguage("en-US");
-            await flutterTts.speak("English");
-          } else {
-            await flutterTts.setLanguage("ar-SA");
-            await flutterTts.speak("العربية");
-          }
-        },
-        onDoubleTap: () {
-          // Stronger feedback on language selection
-          Feedback.forLongPress(context);
-          setLanguage(langCode);
-        },
-        child: Container(
-          width: double.infinity,
-          height: 90, // Increased from 70 to 90
-          margin: const EdgeInsets.symmetric(vertical: 12), // slightly larger spacing
-          decoration: BoxDecoration(
-            color: Colors.grey[800],
-            borderRadius: BorderRadius.circular(20),
-          ),
-          alignment: Alignment.center,
+    return Semantics(
+      label: spokenLabel,
+      hint: hint,
+      button: true,
+      onTapHint: hint,
+      child: MergeSemantics(
+        child: MaterialButton(
+          onPressed: () async {
+            Feedback.forTap(context);
+            await flutterTts.stop();
+            await flutterTts.awaitSpeakCompletion(true);
+            await flutterTts.setLanguage(label == "EN" ? "en-US" : "ar-SA");
+            await flutterTts.speak(spokenLabel);
+          },
+          onLongPress: () {
+            Feedback.forLongPress(context);
+            setLanguage(langCode);
+          },
+          color: Colors.grey[800],
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          minWidth: double.infinity,
+          height: 90,
           child: Text(
             label,
             style: const TextStyle(
-              fontSize: 28, // larger font size
+              fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
@@ -201,33 +188,37 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
     );
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: FocusTraversalGroup(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Semantics(
-                header: true,
-                child: const Text(
-                  "Select Language",
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: SingleChildScrollView(
+          child: FocusTraversalGroup(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Semantics(
+                    header: true,
+                    child: const Text(
+                      "Select Language",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                ),
+                  const SizedBox(height: 60),
+                  languageButton("EN", "EN"),
+                  const SizedBox(height: 30),
+                  languageButton("AR", "AR"),
+                ],
               ),
-              const SizedBox(height: 50),
-              languageButton("EN", "EN"),
-              const SizedBox(height: 30),
-              languageButton("AR", "AR"),
-            ],
+            ),
           ),
         ),
       ),
