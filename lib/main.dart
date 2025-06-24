@@ -1,16 +1,28 @@
 import 'package:ayn/config/routerConfig.dart';
-import 'package:ayn/routes/home.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter/services.dart';
 
-
-List<CameraDescription> cameras = [];
+List<CameraDescription> _cameras = [];
 const String apiKey = 'fmFrMl3wHnB9SFnb8bzxNFpGCVE18Wcz';
 
 void main() async {
+  
   WidgetsFlutterBinding.ensureInitialized();
-  cameras = await availableCameras();
-  runApp(MyApp());
+  
+  try {
+    _cameras = await availableCameras();
+  } on CameraException catch (e) {
+    print('Error: ${e.code}\n${e.description}');
+    _cameras = [];
+  }
+
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,  // Lock to portrait mode
+  ]).then((_) {
+    runApp(MyApp());
+  });
+  
 }
 
 class MyApp extends StatelessWidget {
