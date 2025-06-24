@@ -22,7 +22,7 @@ final GoRouter router = GoRouter(
   routes: <RouteBase>[
     GoRoute(
       path: homeRoute,
-      builder: (context, state) => AssistHomePage(),
+      builder: (context, state) => HomePage(),
     ),
     GoRoute(
       path: languageSelectionRoute,
