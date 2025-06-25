@@ -9,6 +9,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 final List<String> allModes = [
   "picture describe",
@@ -40,6 +41,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   bool _isRecording = false;
   String? _videoPath;
   final FlutterTts flutterTts = FlutterTts();
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool _isListening = false;
+  String _voiceInput = '';
+
+  List<Map<String, dynamic>> _sessionContext = [];
 
   @override
   void initState() {
@@ -48,6 +54,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _tabController!.addListener(_handleTabSelection);
     _setupCameras();
     _updateCurrentModeForTab(_tabController!.index);
+    _sessionContext = [];
   }
 
   void _handleTabSelection() {
@@ -124,8 +131,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _announceToScreenReader(String message) {
-    SemanticsBinding.instance.ensureSemantics();
-    SemanticsService.announce(message, TextDirection.ltr);
+    // SemanticsBinding.instance.ensureSemantics();
+    // SemanticsService.announce(message, TextDirection.ltr);
     flutterTts.stop();
     flutterTts.speak(message);
   }
@@ -136,6 +143,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _tabController!.dispose();
     _cameraController?.dispose();
     flutterTts.stop();
+    _sessionContext.clear(); // Clear context on app close
     super.dispose();
   }
 
@@ -163,60 +171,88 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       'Authorization': 'Bearer $apikey',
       'Content-Type': 'application/json',
     };
-    List<dynamic> currentContent = [
-      {"type": "text", "text": query}
-    ];
-    if (image != null) {
-      try {
-        final bytes = await image.readAsBytes();
-        final base64Image = base64Encode(bytes);
-        currentContent.add({
-          "type": "image_url",
-          "image_url": {"url": "data:image/jpeg;base64,$base64Image"}
-        });
-      } catch (e) {
-        print("Error encoding image: $e");
-        _announceToScreenReader("Error processing image. Please try again.");
-        return;
-      }
-    } else if (videoFile != null) {
-      try {
-        final bytes = await videoFile.readAsBytes();
-        if (bytes.lengthInBytes > 5 * 1024 * 1024) {
-          _announceToScreenReader("Video file is too large. Please record a shorter video.");
+    List<dynamic>? currentContent;
+    dynamic messages;
+    // Voice chat: text only
+    if (image == null && videoFile == null) {
+      // Add user message to context
+      _sessionContext.add({"role": "user", "content": query});
+      messages = List<Map<String, dynamic>>.from(_sessionContext);
+    } else {
+      currentContent = [
+        {"type": "text", "text": query}
+      ];
+      if (image != null) {
+        try {
+          final bytes = await image.readAsBytes();
+          final base64Image = base64Encode(bytes);
+          currentContent.add({
+            "type": "image_url",
+            "image_url": {"url": "data:image/jpeg;base64,$base64Image"}
+          });
+        } catch (e) {
+          print("Error encoding image: $e");
+          _announceToScreenReader("Error processing image. Please try again.");
           return;
         }
-        final base64Video = base64Encode(bytes);
-        currentContent.add({
-          "type": "video_url",
-          "video_url": {"url": "data:video/mp4;base64,$base64Video"}
-        });
-      } catch (e) {
-        print("Error encoding video: $e");
-        _announceToScreenReader("Error processing video. Please try again.");
-        return;
+      } else if (videoFile != null) {
+        try {
+          final bytes = await videoFile.readAsBytes();
+          if (bytes.lengthInBytes > 5 * 1024 * 1024) {
+            _announceToScreenReader("Video file is too large. Please record a shorter video.");
+            return;
+          }
+          final base64Video = base64Encode(bytes);
+          currentContent.add({
+            "type": "video_url",
+            "video_url": {"url": "data:video/mp4;base64,$base64Video"}
+          });
+        } catch (e) {
+          print("Error encoding video: $e");
+          _announceToScreenReader("Error processing video. Please try again.");
+          return;
+        }
       }
+      // Add user multimodal message to context
+      _sessionContext.add({"role": "user", "content": currentContent});
+      messages = List<Map<String, dynamic>>.from(_sessionContext);
     }
-    final messages = [
-      {"role": "user", "content": currentContent}
-    ];
     var body = jsonEncode({
-      "model": "Fanar-Oryx-IVU-1",
+      "model": (image==null && videoFile==null) ? "Fanar" : "Fanar-Oryx-IVU-1",
+      "truncate_prompt_tokens": 7700,
+      "max_tokens": 492, 
       "stop": ["(", "Note:", "//"],
       "messages": messages,
     });
     if(currentMode == "medication identifier"){
+      print("here");
+      messages.insert(0, {
+        "role": "system",
+        "content": '''
+      You are a strict visual OCR tool. Your only job is to extract the most prominent brand name from a medicine box image.
+
+      You must:
+      - ONLY return the brand name (e.g., Panadol, Dermadep)
+      - NEVER explain, rephrase, or add commentary
+      - NEVER output anything except the name itself
+      - NEVER return full sentences or parentheses
+
+      If the image is blurry or unclear, return exactly:
+      Unable to identify medicine name. Please try again by placing the front of the box clearly in front of the camera.
+
+      If more than one box is shown, return exactly:
+      Multiple medicine boxes detected. Please show only one medicine at a time.
+
+      If the brand name contains symbols like ® or ™, include them as-is.
+
+      ❗IMPORTANT: Return the name exactly as shown, with no commentary. Do NOT say “Note: ...”, do NOT talk like a chatbot.
+
+      '''
+      });
       body = jsonEncode({
       "model": "Fanar-Oryx-IVU-1",
-      "temperature": 0.0,
-      "top_p": 0.1,
-      "max_tokens": 20,
-      "stop": ["\n", "(", "Note:", "//", "I/flutter"],
-      "repetition_penalty": 2.0,
-      "frequency_penalty": 2.0,
-      "presence_penalty": 2.0,
-      "skip_special_tokens": true,
-      "min_tokens": 1,
+      "truncate_prompt_tokens": 7700,
+      "max_tokens": 492, 
       "messages": messages,
       });
     }
@@ -225,13 +261,19 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       if (response.statusCode == 200) {
         final responseBody = jsonDecode(response.body);
         var reply = responseBody["choices"][0]["message"]["content"];
+        print(reply);
+        if(currentMode == "medication identifier"){
+          reply = responseBody["choices"][0]["message"]["content"].split(" ")[0];
+        }
         print("Fanar reply: $reply");
+        // Add assistant reply to context
+        _sessionContext.add({"role": "assistant", "content": reply});
         _announceToScreenReader(reply);
       } else if (response.statusCode == 400) {
-        print("API error 400: ${response.body}");
+        print("API error 400: \\${response.body}");
         _announceToScreenReader("I had trouble understanding your request. Please try again.");
       } else {
-        print("API error: ${response.statusCode} - ${response.body}");
+        print("API error: \\${response.statusCode} - \\${response.body}");
         _announceToScreenReader("Sorry, I encountered an error. Please try again.");
       }
     } catch (e) {
@@ -277,7 +319,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
           **Rules**:
           - If denomination/currency is ambiguous, return "Unknown".
-          - Never use currency codes (e.g., USD, EUR) or symbols (\$, 8).
+          - Never use currency codes (e.g., USD, EUR) or symbols (\$, 8).
           - Prioritize visible text/design over background patterns.
           - Handle partial/obstructed bills by checking security features (holograms, watermarks).
         ''';
@@ -286,41 +328,28 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         prompt = "Describe this outfit in terms of color, style, and use. Is it formal, casual, or something else? reply in only 1 sentence";
         await callFanarAPI(query: prompt, image: File(path));
       }else if(currentMode == "medication identifier"){
+        // You are a vision-based assistant helping a blind person identify medicines.
         prompt ='''
-You are a text-extraction tool for medicine identification. Your ONLY function is to output the dominant text on the box front EXACTLY as visually presented.
+        You are a strict visual OCR tool. Your only job is to extract the most prominent brand name from a medicine box image.
 
-**Failure Prevention Protocol (MUST OBSERVE):**
-1. ⛔ **NEVER** add notes, parentheses, or explanations
-2. ⛔ **NEVER** interpret, correct, or rephrase text 
-3. ⛔ **NEVER** translate or contextualize words
-4. ⛔ **NEVER** assume meaning or intent
-5. ✅ **ALWAYS** preserve: spelling, casing, spacing, punctuation
+        You must:
+        - ONLY return the brand name (e.g., Panadol, Dermadep)
+        - NEVER explain, rephrase, or add commentary
+        - NEVER output anything except the name itself
+        - NEVER return full sentences or parentheses
 
-**Execution Rules:**
-1. Extract ONLY the largest/most central text on the box front
-2. If text contains non-English characters: PRESERVE them
-3. If text is stylized (e.g., "SkinCare"): PRESERVE formatting
-4. Output format: Raw text string ONLY
+        If the image is blurry or unclear, return exactly:
+        Unable to identify medicine name. Please try again by placing the front of the box clearly in front of the camera.
 
-**Error Handling (EXACT PHRASES ONLY):**
-- Unreadable/blurry: "Unable to identify medicine name. Please try again by placing the front of the box clearly in front of the camera."
-- Multiple boxes: "Multiple medicine boxes detected. Please show only one medicine at a time."
+        If more than one box is shown, return exactly:
+        Multiple medicine boxes detected. Please show only one medicine at a time.
 
-**Conditioning Examples:**
-INPUT: "Dermadep" 9 OUTPUT: `Dermadep`  
-INPUT: "SkinDep" 9 OUTPUT: `SkinDep`  
-INPUT: "Panadol Extra" 9 OUTPUT: `Panadol Extra`  
-INPUT: "Vitamina C+" 9 OUTPUT: `Vitamina C+`
+        If the brand name contains symbols like ® or ™, include them as-is.
 
-**PROHIBITED OUTPUT EXAMPLES (NEVER GENERATE):**
-- "Skin Care (rephrased from Dermadep)"
-- "Dermadep [possibly meaning skin care]"
-- "SkinDep - likely a skincare product"
-- "Vitamina C+ (Spanish for Vitamin C)"
+        ❗IMPORTANT: Return the name exactly as shown, with no commentary. Do NOT say “Note: ...”, do NOT talk like a chatbot.
 
-**Final Enforcement:**
-YOUR OUTPUT MUST BE A SINGLE STRING WITH 0 ADDITIONAL CHARACTERS. ANY DEVIATION RISKS MEDICATION SAFETY.
         ''';
+        prompt = "What is the brand name of this medicine?";
         await callFanarAPI(query: prompt, image: File(path));
       }else if(currentMode == "barcode"){
         await _handleBarcodeScan(path);
@@ -516,9 +545,9 @@ YOUR OUTPUT MUST BE A SINGLE STRING WITH 0 ADDITIONAL CHARACTERS. ANY DEVIATION 
                   label: 'Voice chat',
                   hint: 'Double tap to activate voice chat',
                   child: IconButton(
-                    icon: const Icon(Icons.mic, color: Colors.white, size: 40),
+                    icon: Icon(_isListening ? Icons.mic : Icons.mic_none, color: Colors.white, size: 40),
                     onPressed: () {
-                      _announceToScreenReader("Voice chat not implemented yet.");
+                      _startVoiceChat();
                     },
                   ),
                 ),
@@ -680,6 +709,61 @@ YOUR OUTPUT MUST BE A SINGLE STRING WITH 0 ADDITIONAL CHARACTERS. ANY DEVIATION 
         ),
       ),
     );
+  }
+
+  Future<void> _startVoiceChat() async {
+    if (!_isListening) {
+      // Ensure TTS finishes before listening
+      await flutterTts.awaitSpeakCompletion(true);
+      await flutterTts.speak("Voice chat started. Please speak your question.");
+      await flutterTts.awaitSpeakCompletion(true);
+      bool available = await _speech.initialize(
+        onStatus: (val) {
+          if (val == 'done' || val == 'notListening') {
+            setState(() => _isListening = false);
+            _speech.stop();
+            if (_voiceInput.trim().isNotEmpty) {
+              _sendVoiceToFanar(_voiceInput.trim());
+            } else {
+              _announceToScreenReader("No voice input detected. Please try again.");
+            }
+          }
+        },
+        onError: (val) {
+          setState(() => _isListening = false);
+          _announceToScreenReader("Voice recognition error. Please try again.");
+        },
+      );
+      if (available) {
+        setState(() {
+          _isListening = true;
+          _voiceInput = '';
+        });
+        _speech.listen(
+          onResult: (val) {
+            print(val.recognizedWords);
+            setState(() {
+              _voiceInput = val.recognizedWords;
+            });
+          },
+          localeId: 'en_US',
+        );
+      } else {
+        _announceToScreenReader("Speech recognition not available.");
+      }
+    } else {
+      setState(() => _isListening = false);
+      _speech.stop();
+    }
+  }
+
+  Future<void> _sendVoiceToFanar(String userQuery) async {
+    final prompt = '''
+  You are an assistive AI for blind users. Respond to the following question in a clear, concise, and helpful manner. Avoid visual references. If the question is ambiguous, ask for clarification. Speak as if you are guiding someone who cannot see the screen.
+
+  User question: "$userQuery"
+''';
+    await callFanarAPI(query: prompt);
   }
 
   @override
