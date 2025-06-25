@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -21,9 +22,12 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
 
   Timer? _inactivityTimer;
 
+  final FlutterTts flutterTts = FlutterTts();
+
   @override
   void initState() {
     super.initState();
+    flutterTts.awaitSpeakCompletion(true); // Ensures speaking completes before continuing
     speakInstructions();
     startInactivityTimer();
   }
@@ -34,33 +38,40 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
     super.dispose();
   }
 
-  void _announceToScreenReader(String message, {TextDirection? direction}) {
+  Future<void> _announceToScreenReader(String message, {TextDirection? direction}) async {
     SemanticsBinding.instance.ensureSemantics();
-    // If Arabic detected, use RTL, else LTR
     final isArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(message);
     SemanticsService.announce(
       message,
       direction ?? (isArabic ? TextDirection.rtl : TextDirection.ltr),
     );
+    print("speaking");
+
+    await flutterTts.stop();
+    if (!isArabic) {
+      await flutterTts.setLanguage("en");
+    } else {
+      await flutterTts.setLanguage("ar");
+    }
+    await flutterTts.speak(message);
   }
 
   void startInactivityTimer() {
-    _inactivityTimer?.cancel(); // clear old timer
+    _inactivityTimer?.cancel();
     _inactivityTimer = Timer.periodic(const Duration(seconds: 45), (_) {
       speakInstructions();
     });
   }
 
   Future<void> speakInstructions() async {
-    _inactivityTimer?.cancel(); // Stop existing timer while speaking
+    _inactivityTimer?.cancel(); // Pause while speaking
 
-    _announceToScreenReader(_welcomeMessageAr, direction: TextDirection.rtl);
-    await Future.delayed(const Duration(milliseconds: 1500));
-    _announceToScreenReader(_welcomeMessageEn, direction: TextDirection.ltr);
+    await _announceToScreenReader(_welcomeMessageAr, direction: TextDirection.rtl);
+    await Future.delayed(const Duration(milliseconds: 800));
+    await _announceToScreenReader(_welcomeMessageEn, direction: TextDirection.ltr);
     await Future.delayed(const Duration(milliseconds: 2500));
 
-    // Now start the inactivity timer AFTER both instructions finish
-    startInactivityTimer();
+    startInactivityTimer(); // Restart timer after speaking
   }
 
   Future<void> setLanguage(String langCode) async {
@@ -69,23 +80,20 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
     await prefs.setString("language", langCode);
 
     if (langCode == 'EN') {
-      _announceToScreenReader("English selected", direction: TextDirection.ltr);
+      await _announceToScreenReader("English selected", direction: TextDirection.ltr);
     } else {
-      _announceToScreenReader("تم اختيار اللغة العربية", direction: TextDirection.rtl);
+      await _announceToScreenReader("تم اختيار اللغة العربية", direction: TextDirection.rtl);
     }
 
     await prefs.setBool("first_time", false);
 
     // Ask if user wants instructions
-    await Future.delayed(const Duration(milliseconds: 800));
-    _announceToScreenReader(
+    await _announceToScreenReader(
       langCode == 'EN'
         ? "Would you like to hear the instructions for using the app? Please say yes or no."
         : "هل ترغب في سماع التعليمات الخاصة باستخدام التطبيق؟ قل نعم أو لا.",
       direction: langCode == 'EN' ? TextDirection.ltr : TextDirection.rtl,
     );
-
-    await Future.delayed(const Duration(milliseconds: 2000));
 
     final localeId = langCode == 'EN' ? 'en_US' : 'ar_SA';
 
@@ -98,9 +106,6 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
     if (available) {
       _speech.listen(
         localeId: localeId,
-        listenFor: const Duration(seconds: 5),
-        pauseFor: const Duration(seconds: 2),
-        partialResults: false,
         onResult: (result) {
           resultText = result.recognizedWords.toLowerCase();
         },
@@ -120,7 +125,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
 
     if (wantsInstructions) {
       await Future.delayed(const Duration(milliseconds: 500));
-      _announceToScreenReader(
+      await _announceToScreenReader(
         langCode == 'EN'
           ? "Instructions: Triple tap anywhere to switch the camera. Double tap to take a photo and ask your question. Long press to record a video. After image or video is captured, you can ask a question using your voice. The assistant will describe what it sees and answer."
           : "التعليمات: انقر ثلاث مرات في أي مكان للتبديل بين الكاميرات. انقر مرتين لالتقاط صورة واطرح سؤالك. اضغط مطولاً لتسجيل فيديو. بعد التقاط الصورة أو الفيديو، يمكنك طرح سؤال صوتي. المساعد سيصف ما يراه ويجيب.",
@@ -128,7 +133,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
       );
       await Future.delayed(const Duration(milliseconds: 4000));
     } else {
-      _announceToScreenReader(
+      await _announceToScreenReader(
         langCode == 'EN'
           ? "Skipping instructions."
           : "سيتم تخطي التعليمات.",
@@ -148,24 +153,22 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
       button: true,
       child: GestureDetector(
         onTap: () async {
-          // Haptic feedback on single tap
           Feedback.forTap(context);
 
           if (label == 'EN') {
-            _announceToScreenReader("English", direction: TextDirection.ltr);
+            await _announceToScreenReader("English", direction: TextDirection.ltr);
           } else {
-            _announceToScreenReader("العربية", direction: TextDirection.rtl);
+            await _announceToScreenReader("العربية", direction: TextDirection.rtl);
           }
         },
         onDoubleTap: () {
-          // Stronger feedback on language selection
           Feedback.forLongPress(context);
           setLanguage(langCode);
         },
         child: Container(
           width: double.infinity,
-          height: 90, // Increased from 70 to 90
-          margin: const EdgeInsets.symmetric(vertical: 12), // slightly larger spacing
+          height: 90,
+          margin: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: Colors.grey[800],
             borderRadius: BorderRadius.circular(20),
@@ -174,7 +177,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
           child: Text(
             label,
             style: const TextStyle(
-              fontSize: 28, // larger font size
+              fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
