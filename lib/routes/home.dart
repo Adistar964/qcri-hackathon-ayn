@@ -74,7 +74,7 @@ class _HomePageState extends State<HomePage>
   Future<void> detectLanguage() async {
     prefs = await SharedPreferences.getInstance();
     isEnglish = prefs!.getString("language") == "EN";
-    await prefs!.setBool("first_time", true);
+    // await prefs!.setBool("first_time", true);
     if(mounted) setState(() {});
   }
 
