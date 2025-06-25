@@ -249,9 +249,8 @@ class _HomePageState extends State<HomePage>
       "model": (image == null && videoFile == null)
           ? "Fanar"
           : "Fanar-Oryx-IVU-1",
-      "truncate_prompt_tokens": 7700,
-      "max_tokens": 492,
-      "stop": ["(", "Note:", "//"],
+      "truncate_prompt_tokens": 4096,
+      // "stop": ["(", "Note:", "//"],
       "messages": messages,
     });
     if (currentMode == "medication identifier") {
@@ -273,7 +272,7 @@ class _HomePageState extends State<HomePage>
       If more than one box is shown, return exactly:
       Multiple medicine boxes detected. Please show only one medicine at a time.
 
-      If the brand name contains symbols like ®️ or ™️, include them as-is.
+      If the brand name contains symbols like ®️ or ™️, do not include them.
 
       ❗IMPORTANT: Return the name exactly as shown, with no commentary. Do NOT say “Note: ...”, do NOT talk like a chatbot.
 
@@ -281,8 +280,7 @@ class _HomePageState extends State<HomePage>
       });
       body = jsonEncode({
         "model": "Fanar-Oryx-IVU-1",
-        "truncate_prompt_tokens": 7700,
-        "max_tokens": 492,
+        "truncate_prompt_tokens": 4096,
         "messages": messages,
       });
     }
