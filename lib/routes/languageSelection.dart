@@ -16,9 +16,9 @@ class LanguageSelectionPage extends StatefulWidget {
 class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
   final stt.SpeechToText _speech = stt.SpeechToText();
   final String _welcomeMessageEn =
-      "Welcome to AYN. Please select a language from the buttons given. Tap once to hear the language. Double tap to select.";
+      "Welcome to AYN. Please select a language from the buttons given.";
   final String _welcomeMessageAr =
-      "أهلاً بك في عين. يُرجى اختيار لغة من الأزرار المُتاحة. انقر مرة واحدة لسماع اللغة. انقر مرتين للاختيار.";
+      "مرحبًا بكم في أين. يرجى اختيار لغة من الأزرار المعروضة.";
 
   Timer? _inactivityTimer;
 
@@ -148,23 +148,25 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
   Widget languageButton(String label, String langCode) {
     return Semantics(
       label: label == "EN"
-          ? "Select English. Double tap to choose English language."
-          : "اختر العربية. انقر مرتين لاختيار اللغة العربية.",
+          ? "Select English Button"
+          : "حدد الزر العربي",
       button: true,
       child: GestureDetector(
         onTap: () async {
-          Feedback.forTap(context);
+          // Feedback.forTap(context);
 
-          if (label == 'EN') {
-            await _announceToScreenReader("English", direction: TextDirection.ltr);
-          } else {
-            await _announceToScreenReader("العربية", direction: TextDirection.rtl);
-          }
-        },
-        onDoubleTap: () {
-          Feedback.forLongPress(context);
+          // if (label == 'EN') {
+          //   await _announceToScreenReader("English", direction: TextDirection.ltr);
+          // } else {
+          //   await _announceToScreenReader("العربية", direction: TextDirection.rtl);
+          // }
+          Feedback.forTap(context);
           setLanguage(langCode);
         },
+        // onDoubleTap: () {
+        //   Feedback.forLongPress(context);
+        //   setLanguage(langCode);
+        // },
         child: Container(
           width: double.infinity,
           height: 90,

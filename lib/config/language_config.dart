@@ -208,8 +208,8 @@ final Map languageMap = {
   "Picture Describe tab":
    "علامة تبويب وصف الصورة",
 
-  "Document Reader tab":
-   "علامة تبويب قارئ المستندات",
+  "Read tab":
+  "قراءة علامة التبويب",
 
   "Other Modes tab":
    "علامة تبويب أوضاع أخرى",
