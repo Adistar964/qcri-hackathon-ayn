@@ -193,9 +193,9 @@ final Map languageMap = {
   "Speech recognition not available.":
    "التعرف على الكلام غير متاح.",
 
-  "You are an assistive AI for blind users. Respond to the following question in a clear, concise, and helpful manner. Avoid visual references. If the question is ambiguous, ask for clarification. Speak as if you are guiding someone who cannot see the screen.\n\nUser question: ":
-   "أنت ذكاء اصطناعي مساعد للمستخدمين المكفوفين. أجب على السؤال التالي بطريقة واضحة وموجزة ومفيدة. تجنب المراجع المرئية. إذا كان السؤال غامضًا، فاطلب توضيحًا. تحدث كما لو كنت توجه شخصًا لا يستطيع رؤية الشاشة.\n\nسؤال المستخدم: ",
-
+  "You are an assistive AI designed to help blind users. Always answer clearly, concisely, and without visual references. If the user's question is unclear, ask for clarification. When responding, act as a guide for someone who cannot see the screen. Use simple and accessible language. If any previous questions or context are available, use them to enhance the accuracy and relevance of your response.\nUser question: ":
+  "أنت مساعد ذكي مصمم لمساعدة المستخدمين المكفوفين. أجب دائمًا بطريقة واضحة ومختصرة، وتجنب أي إشارات بصرية. إذا كان السؤال غير واضح، فاطلب توضيحًا. تحدث وكأنك ترشد شخصًا لا يمكنه رؤية الشاشة. استخدم لغة بسيطة وسهلة الفهم. إذا كانت هناك أسئلة أو سياق سابق، فاعتمد عليه لتحسين دقة وفائدة الإجابة.\n\nسؤال المستخدم:",
+  
   "Main screen with camera preview, controls, and mode selection":
    "الشاشة الرئيسية مع معاينة الكاميرا وعناصر التحكم واختيار الوضع",
 
@@ -243,4 +243,11 @@ final Map languageMap = {
 
    "More":
    "أكثر",
+
+   "Failed to detect the medicine":
+   "فشل في اكتشاف الدواء",
+
+   "Explain this medicine in clear, simple spoken language: what it's for, how to use it, and any important warnings. Avoid medical jargon. Do not include phrases like 'here’s a simple explanation' or references to the user being blind. JSON:":
+  "اشرح هذا الدواء بلغة عربية مبسطة وواضحة: ما استخدامه، وكيفية استعماله، والتحذيرات المهمة. تجنب المصطلحات الطبية المعقدة. لا تذكر عبارات مثل 'شرح لمستخدم كفيف' أو أي إشارات إلى المستخدم. JSON: ",
+
 };

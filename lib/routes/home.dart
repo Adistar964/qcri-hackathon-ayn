@@ -1,3 +1,4 @@
+import 'package:ayn/config/api_config.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/semantics.dart';
@@ -20,7 +21,6 @@ final List<String> allModes = [
   "barcode",
   "medication identifier",
   "currency",
-  // "Light intensity detector",
   "outfit identifier",
 ];
 
@@ -31,7 +31,6 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-final String apikey = "fmFrMl3wHnB9SFnb8bzxNFpGCVE18Wcz";
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
@@ -209,19 +208,25 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  Future<void> callFanarAPI({
+  Future<dynamic> callFanarAPI({
     required String query,
     File? image,
     File? videoFile,
+    bool speakReponse = true
   }) async {
-    final uri = Uri.parse('https://api.fanar.qa/v1/chat/completions');
+    var (apiKey, apiRoute, apiModel) = get_API_credentials(speakReponse ? true : false);
+    print("using $apiModel");
+    final uri = Uri.parse(apiRoute);
     final headers = {
-      'Authorization': 'Bearer $apikey',
+      'Authorization': 'Bearer $apiKey',
       'Content-Type': 'application/json',
     };
     List<dynamic>? currentContent;
     dynamic messages;
 
+    if(image == null && videoFile == null){
+      apiModel = "Fanar"; // better with text handling
+    }
     // Reset context if media is used
     if (image != null || videoFile != null) {
       _sessionContext = [];
@@ -247,6 +252,7 @@ class _HomePageState extends State<HomePage>
         } catch (e) {
           print("Error encoding image: $e");
           _announceToScreenReader("Error processing image. Please try again.");
+          if (!speakReponse) return "error";
           return;
         }
       } else if (videoFile != null) {
@@ -256,6 +262,7 @@ class _HomePageState extends State<HomePage>
             _announceToScreenReader(
               "Video file is too large. Please record a shorter video.",
             );
+            if (!speakReponse) return "error";
             return;
           }
           final base64Video = base64Encode(bytes);
@@ -266,6 +273,7 @@ class _HomePageState extends State<HomePage>
         } catch (e) {
           print("Error encoding video: $e");
           _announceToScreenReader("Error processing video. Please try again.");
+          if (!speakReponse) return "error";
           return;
         }
       }
@@ -274,49 +282,41 @@ class _HomePageState extends State<HomePage>
       messages = List<Map<String, dynamic>>.from(_sessionContext);
     }
     var body = jsonEncode({
-      "model": (image == null && videoFile == null)
-          ? "Fanar"
-          : "Fanar-Oryx-IVU-1",
+      "model": apiModel,
       "truncate_prompt_tokens": 4096,
       // "stop": ["(", "Note:", "//"],
       "messages": messages,
     });
-    if (currentMode == "medication identifier") {
-      body = jsonEncode({
-        "model": "Fanar-Oryx-IVU-1",
-        "truncate_prompt_tokens": 4096,
-        "messages": messages,
-      });
-    }
     try {
       final response = await http.post(uri, headers: headers, body: body);
       if (response.statusCode == 200) {
         final responseBody = jsonDecode(response.body);
         var reply = responseBody["choices"][0]["message"]["content"];
-        print(reply);
-        if (currentMode == "medication identifier") {
-          reply = responseBody["choices"][0]["message"]["content"].split(
-            " ",
-          )[0];
-        }
         print("Fanar reply: $reply");
         // Add assistant reply to context
         _sessionContext.add({"role": "assistant", "content": reply});
-        _announceToScreenReader(reply);
+        if(speakReponse){
+          _announceToScreenReader(reply);
+        }else{
+          return reply; // if speakReponse is disabled, this function will only return the response
+        }
       } else if (response.statusCode == 400) {
-        print("API error 400: \\${response.body}");
+        print("API error 400 from fanar: \\${response.body}");
         _announceToScreenReader(
           translate("I had trouble understanding your request. Please try again.", isEnglish: isEnglish ?? true),
         );
+        if (!speakReponse) return "error";
       } else {
-        print("API error: \\${response.statusCode} - \\${response.body}");
+        print("API error from fanar: \\${response.statusCode} - \\${response.body}");
         _announceToScreenReader(
           translate("Sorry, I encountered an error. Please try again.", isEnglish: isEnglish ?? true),
         );
+        if (!speakReponse) return "error";
       }
     } catch (e) {
-      print("API error: $e");
+      print("API error from fanar: $e");
       _announceToScreenReader(translate("Error connecting to the assistant service.", isEnglish: isEnglish ?? true));
+      if (!speakReponse) return "error";
     }
   }
 
@@ -358,8 +358,11 @@ class _HomePageState extends State<HomePage>
         prompt = translate("Describe this outfit in terms of color, style, and use. Is it formal, casual, or something else? reply in only 1 sentence", isEnglish: isEnglish ?? true);
         await callFanarAPI(query: prompt, image: File(path));
       } else if (currentMode == "medication identifier") {
-        prompt =   translate("You are a strict visual OCR tool. Your only job is to extract the most prominent brand name from a medicine box image.\nYou must:\n- ONLY return the brand name (e.g., Panadol, Dermadep)\n- NEVER explain, rephrase, or add commentary\n- NEVER output anything except the name itself\n- NEVER return full sentences or parentheses\nIf the image is blurry or unclear, return exactly:\nUnable to identify medicine name. Please try again by placing the front of the box clearly in front of the camera.\nIf more than one box is shown, return exactly:\nMultiple medicine boxes detected. Please show only one medicine at a time.\nIf the brand name contains symbols like ®️ or ™️, include them as-is.\n❗IMPORTANT: Return the name exactly as shown, with no commentary. Do NOT say “Note: ...”, do NOT talk like a chatbot.", isEnglish: isEnglish ?? true);
-        await callFanarAPI(query: prompt, image: File(path));
+        prompt =   translate("You are a strict visual OCR tool. Your only job is to extract the most prominent medicine name from a medicine box image.\nYou must:\n- ONLY return the brand name (e.g., Panadol, Dermadep)\n- NEVER explain, rephrase, or add commentary\n- NEVER output anything except the name itself\n- NEVER return full sentences or parentheses\nIf the image is blurry or unclear, return exactly:\nUnable to identify medicine name. Please try again by placing the front of the box clearly in front of the camera.\nIf more than one box is shown, return exactly:\nMultiple medicine boxes detected. Please show only one medicine at a time.\nIf the brand name contains symbols like ®️ or ™️, include them as-is.\n❗IMPORTANT: Return the name exactly as shown, with no commentary. Do NOT say “Note: ...”, do NOT talk like a chatbot.", isEnglish: isEnglish ?? true);
+        final brandName = await callFanarAPI(query: prompt, image: File(path), speakReponse: false);
+        print("brandName: $brandName");
+        getMedicineInfo(brandName);
+        // await getMedicineInfo("calendula");
       } else if (currentMode == "barcode") {
         await _handleBarcodeScan(path);
       }
@@ -439,6 +442,54 @@ class _HomePageState extends State<HomePage>
     if (barcodes.isEmpty) return null;
     return barcodes.first.rawValue;
   }
+
+  Future<void> getMedicineInfo(String brandName) async {
+    if (brandName == "error") return;
+    else if (brandName.split(" ").length > 2){
+    _announceToScreenReader(brandName);
+    };
+    print("passed those checks");
+    try {
+      // Use OpenFDA to get medicine info by brand name
+      final uri = Uri.parse(
+        'https://api.fda.gov/drug/label.json?search=openfda.brand_name:"$brandName"&limit=1',
+      );
+
+      final response = await http.get(uri);
+
+      if (response.statusCode != 200) {
+        print('Failed to find drug info for brand name: $brandName');
+        _announceToScreenReader(translate("Failed to detect the medicine", isEnglish: isEnglish ?? true));
+        return;
+      }
+
+      final data = json.decode(response.body);
+
+      if (data == null || data['results'] == null || data['results'].isEmpty) {
+        print('No drug info found for brand name: $brandName');
+        _announceToScreenReader(translate("Failed to detect the medicine", isEnglish: isEnglish ?? true));
+        return;
+      }
+
+      final drugInfo = data['results'][0]; // Take the first result
+      Map<String, dynamic> simplified = {
+        "brand_name": drugInfo["openfda"]?["brand_name"]?[0],
+        "indications_and_usage": drugInfo["indications_and_usage"]?[0],
+        "warnings": drugInfo["warnings"]?[0],
+        "dosage_and_administration": drugInfo["dosage_and_administration"]?[0],
+      };
+      // print(drugInfo); // You can extract specific fields like description, usage, warnings, etc.
+      String query = translate("Explain this medicine in clear, simple spoken language: what it's for, how to use it, and any important warnings. Avoid medical jargon. Do not include phrases like 'here’s a simple explanation' or references to the user being blind. JSON:", isEnglish: isEnglish ?? true);
+      query = query + "  " + jsonEncode(simplified.toString());
+      print(query);
+      callFanarAPI(query: query);
+
+    } catch (e) {
+      print('Error fetching medicine info: $e');
+      _announceToScreenReader(translate("Failed to detect the medicine", isEnglish: isEnglish ?? true));
+    }
+  }
+
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
@@ -521,6 +572,7 @@ class _HomePageState extends State<HomePage>
                   children: [
                     const Icon(
                       Icons.error, // Add a valid icon
+                      color: Colors.red,
                       size: 50,
                     ),
                     const SizedBox(height: 16),
@@ -770,6 +822,7 @@ class _HomePageState extends State<HomePage>
           if (val == 'done' || val == 'notListening') {
             setState(() => _isListening = false);
             _speech.stop();
+            print("listened");
             if (_voiceInput.trim().isNotEmpty) {
               _sendVoiceToFanar(_voiceInput.trim());
             } else {
@@ -808,8 +861,8 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _sendVoiceToFanar(String userQuery) async {
-    String prompt = translate("You are an assistive AI for blind users. Respond to the following question in a clear, concise, and helpful manner. Avoid visual references. If the question is ambiguous, ask for clarification. Speak as if you are guiding someone who cannot see the screen.\n\nUser question: ", isEnglish: isEnglish ?? true);
-    prompt = "$prompt: $userQuery";
+    String prompt = translate("You are an assistive AI designed to help blind users. Always answer clearly, concisely, and without visual references. If the user's question is unclear, ask for clarification. When responding, act as a guide for someone who cannot see the screen. Use simple and accessible language. If any previous questions or context are available, use them to enhance the accuracy and relevance of your response.\nUser question: ", isEnglish: isEnglish ?? true);
+    prompt = "$prompt $userQuery";
     await callFanarAPI(query: prompt);
   }
 
