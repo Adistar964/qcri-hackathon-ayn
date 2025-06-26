@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>This app uses the camera to scan barcodes and capture visual input.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs access to the microphone to record your voice.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>This app uses speech recognition to process voice input.</string>
 </dict>
 </plist>
