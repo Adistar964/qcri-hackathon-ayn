@@ -243,4 +243,10 @@ final Map languageMap = {
 
    "More":
    "أكثر",
+
+   "Failed to detect the medicine":
+   "فشل في اكتشاف الدواء",
+
+   "Explain this medicine to a blind user in simple spoken language: what it's for, how to use it, and important warnings. Avoid medical jargon. JSON:":
+   "اشرح هذا الدواء لمستخدم كفيف بلغة عربية مبسطة وسهلة النطق: ما استخدامه، وكيفية استعماله، والتحذيرات المهمة. ترجم المعلومات من الإنجليزية إلى العربية وتجنب المصطلحات الطبية المعقدة. JSON:",
 };
