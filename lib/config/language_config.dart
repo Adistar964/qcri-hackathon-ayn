@@ -215,7 +215,7 @@ final Map languageMap = {
    "الأوضاع الأخرى",
 
   " selected":
-   " المحدد",
+   " تم تحديد",
 
   "picture describe":
    "وصف الصورة",
@@ -227,13 +227,13 @@ final Map languageMap = {
    "فيديو",
 
   "barcode":
-   "باركود",
+   "قارئ الباركود",
 
   "medication identifier":
    "مُعرف الأدوية",
 
   "currency":
-   "عملة",
+    "قارئ العملات",
 
   "clothing identifier":
    "مُعرِّف الملابس",
