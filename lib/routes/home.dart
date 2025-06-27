@@ -148,8 +148,9 @@ class _HomePageState extends State<HomePage>
     );
     _initializeControllerFuture = _cameraController!
         .initialize()
-        .then((_) {
+        .then((_) async {
           SemanticsBinding.instance.ensureSemantics();
+          await _cameraController!.setFocusMode(FocusMode.auto);
         })
         .catchError((error) {
           if (error is CameraException) {
