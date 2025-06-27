@@ -18,7 +18,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
   final String _welcomeMessageEn =
       "Welcome to AYN. Please select a language from the buttons given. Tap once to hear the language. Double tap to select.";
   final String _welcomeMessageAr =
-      "أهلاً بك في عين. يُرجى اختيار لغة من الأزرار المُتاحة. انقر مرة واحدة لسماع اللغة. انقر مرتين للاختيار.";
+      "مرحباً بك في عين. يُرجى اختيار لغة من الأزرار الموجودة. اضغط مرة واحدة لسماع اللغة. اضغط مرتين للاختيار.";
 
   Timer? _inactivityTimer;
 
@@ -128,7 +128,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
       await _announceToScreenReader(
         langCode == 'EN'
           ? "Instructions: Triple tap anywhere to switch the camera. Double tap to take a photo and ask your question. Long press to record a video. After image or video is captured, you can ask a question using your voice. The assistant will describe what it sees and answer."
-          : "التعليمات: انقر ثلاث مرات في أي مكان للتبديل بين الكاميرات. انقر مرتين لالتقاط صورة واطرح سؤالك. اضغط مطولاً لتسجيل فيديو. بعد التقاط الصورة أو الفيديو، يمكنك طرح سؤال صوتي. المساعد سيصف ما يراه ويجيب.",
+          : "التعليمات: اضغط ثلاث مرات في أي مكان لتبديل الكاميرا. اضغط مرتين لالتقاط صورة وطرح سؤالك. اضغط لفترة طويلة لتسجيل فيديو. بعد التقاط الصورة أو الفيديو، يمكنك أن تسأل سؤالاً باستخدام صوتك. سيقوم المساعد بوصف ما يراه والإجابة عليه.",
         direction: langCode == 'EN' ? TextDirection.ltr : TextDirection.rtl,
       );
       await Future.delayed(const Duration(milliseconds: 4000));
@@ -149,7 +149,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
     return Semantics(
       label: label == "EN"
           ? "Select English. Double tap to choose English language."
-          : "اختر العربية. انقر مرتين لاختيار اللغة العربية.",
+          : "اختر اللغة الربية. اضغط مرتين لاختيار اللغة العربية.",
       button: true,
       child: GestureDetector(
         onTap: () async {
