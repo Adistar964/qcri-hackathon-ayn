@@ -61,7 +61,7 @@ final Map languageMap = {
   "Extract and return the exact text from this document without any modifications, summaries, or added commentary. Preserve original formatting (e.g., line breaks, lists) to ensure screen-reader compatibility. If the document includes images or tables, provide their alt text or describe their structure. Do not alter, abbreviate, or paraphrase any content.":
    "استخرج وأرجع النص الدقيق من هذا المستند دون أي تعديلات أو ملخصات أو تعليقات إضافية. حافظ على التنسيق الأصلي (مثل فواصل الأسطر والقوائم) لضمان التوافق مع قارئ الشاشة. إذا كان المستند يتضمن صورًا أو جداول، فقدم نصًا بديلاً لها أو صف هيكلها. لا تقم بتغيير أو اختصار أو إعادة صياغة أي محتوى.",
 
-  "You are a currency bill detection expert. Analyze the input image and:\n1. **Identify the denomination** (e.g., 1, 5, 10, 20, 50, 100).\n2. **Detect the currency name** in full official English (e.g., \"US Dollars\", \"Qatari Riyals\", \"Euros\").\n3. **Output format**: Strictly use: `<denomination> <currency_name>` \nExample: \"10 US Dollars\" or \"50 Qatari Riyals\"\n**Rules**:\n- If denomination/currency is ambiguous, return \"Unknown\".\n- Never use currency codes (e.g., USD, EUR) or symbols (\$, 8).\n- Prioritize visible text/design over background patterns.\n- Handle partial/obstructed bills by checking security features (holograms, watermarks).":
+  '"If the paper is green, return “1 Qatari Riyal”; if purple or violet, return “5 Qatari Riyals”; if blue, return “10 Qatari Riyals”; if orange, return “50 Qatari Riyals”; if brown, return “200 Qatari Riyals”; if teal or blue-green, return “100 Qatari Riyals”; if red, return “500 Qatari Riyals”."':
    "أنت خبير في الكشف عن العملات الورقية. قم بتحليل صورة الإدخال و:\n1. **تحديد الفئة** (على سبيل المثال، 1، 5، 10، 20، 50، 100).\n2. **اكتشاف اسم العملة** باللغة الإنجليزية الرسمية الكاملة (على سبيل المثال، \"US Dollars\"، \"Qatari Riyals\"، \"Euros\").\n3. **تنسيق الإخراج**: استخدم بدقة: `<الفئة> <اسم_العملة>` \nمثال: \"10 US Dollars\" أو \"50 Qatari Riyals\"\n**القواعد**:\n- إذا كانت الفئة/العملة غامضة، فأرجع \"Unknown\".\n- لا تستخدم أبدًا رموز العملات (مثل USD، EUR) أو الرموز (\$, 8).\n- إعطاء الأولوية للنص/التصميم المرئي على الأنماط الخلفية.\n- التعامل مع الأوراق النقدية الجزئية/المعاقة عن طريق فحص ميزات الأمان (الهولوغرامات، العلامات المائية).",
 
   "Describe this outfit in terms of color, style, and use. Is it formal, casual, or something else? reply in only 1 sentence":
@@ -106,8 +106,8 @@ final Map languageMap = {
   "Instructions":
    "التعليمات",
 
-  "Instructions opened. Please swipe right to hear available modes and controls.":
-   "تم فتح التعليمات. يُرجى السحب لليمين لسماع الأوضاع المتاحة وعناصر التحكم.",
+  "Instructions opened. Please scroll through every instructions given.":
+  "تم فتح التعليمات. يرجى التمرير خلال كل تعليمات مقدمة.",
 
   "Camera loading":
    "جارٍ تحميل الكاميرا",
@@ -208,8 +208,8 @@ final Map languageMap = {
   "Picture Describe tab":
    "وضع وصف الصورة",
 
-  "Document Reader tab":
-   "وضع قارئ المستندات",
+  "Read tab":
+  "قراءة علامة التبويب",
 
   "Other Modes tab":
    "الأوضاع الأخرى",
