@@ -35,13 +35,13 @@ final Map languageMap = {
    "فشل في تشغيل/إيقاف الفلاش",
 
   "Error processing image. Please try again.":
-   "خطأ في معالجة الصورة. يُرجى المحاولة مرة أخرى.",
+   "خطأ في فحص الصورة. يرجى المحاولة مرة أخرى.",
 
   "Video file is too large. Please record a shorter video.":
    "ملف الفيديو كبير جداً. يُرجى تسجيل فيديو أقصر.",
 
   "Error processing video. Please try again.":
-   "حدث خطأ أثناء معالجة الفيديو. يرجى المحاولة مرة أخرى.",
+   "حدث خطأ أثناء فحص الفيديو. يرجى المحاولة مرة أخرى.",
 
   "I had trouble understanding your request. Please try again.":
    "واجهت صعوبة في فهم طلبك. يُرجى المحاولة مرة أخرى.",
@@ -53,7 +53,7 @@ final Map languageMap = {
    "خطأ في الاتصال بخدمة المساعد.",
 
   "Picture taken successfully. Processing the image. Please wait.":
-   "تم التقاط الصورة بنجاح. جارٍ معالجة الصورة. يُرجى الانتظار.",
+   "تم التقاط الصورة بنجاح. جاري فحص الصورة. يُرجى الانتظار.",
 
   "You are an assistive AI for blind users. Please describe the contents of this image in detail, including objects, people, text, and any relevant context. Be concise, clear, and helpful.":
    "أنت ذكاء اصطناعي مساعد للمستخدمين المكفوفين. يرجى وصف محتويات هذه الصورة بالتفصيل، بما في ذلك الأشياء والأشخاص والنصوص وأي سياق ذي صلة. كن موجزًا وواضحًا ومفيدًا.",
@@ -89,13 +89,13 @@ final Map languageMap = {
    "خطأ في تسجيل الفيديو.",
 
   "No barcode detected.":
-   "لم يتم الكشف عن رمز شريطي.",
+   "لم يتم اكتشاف أي باركود.",
 
   "Product not found.":
    "المنتج غير موجود.",
 
   "An error occurred while scanning the barcode.":
-   "حدث خطأ أثناء مسح الرمز الشريطي.",
+   "حدث خطأ أثناء مسح الرمز الباركود.",
 
   "Open settings":
    "فتح الإعدادات",
@@ -113,7 +113,7 @@ final Map languageMap = {
    "جارٍ تحميل الكاميرا",
 
   "Live camera preview":
-   "معاينة الكاميرا الحية",
+   "عرض مباشر للكاميرا",
 
   "Camera error":
    "خطأ في الكاميرا",
@@ -131,10 +131,10 @@ final Map languageMap = {
    "عناصر التحكم في الكاميرا",
 
   "Voice chat":
-   "الدردشة الصوتية",
+   "المحادثة الصوتية",
 
   "Double tap to activate voice chat":
-   "انقر نقرًا مزدوجًا لتنشيط الدردشة الصوتية",
+   "اضغط مرتين لتفعيل المحادثة الصوتية",
 
   "Stop video recording":
    "إيقاف تسجيل الفيديو",
@@ -146,28 +146,28 @@ final Map languageMap = {
    "التقاط صورة",
 
   "Double tap to stop video recording":
-   "انقر نقرًا مزدوجًا لإيقاف تسجيل الفيديو",
+   "اضغط مرتين لإيقاف تسجيل الفيديو",
 
   "Double tap to start video recording":
-   "انقر نقرًا مزدوجًا لبدء تسجيل الفيديو",
+   "اضغط مرتين لبدء تسجيل الفيديو",
 
   "Double tap to capture an image":
-   "انقر نقرًا مزدوجًا لالتقاط صورة",
+   "اضغط مرتين لتصوير صورة",
 
   "Change camera":
    "تغيير الكاميرا",
 
   "Double tap to switch between front and back camera":
-   "انقر نقرًا مزدوجًا للتبديل بين الكاميرا الأمامية والخلفية",
+   "اضغط مرتين للتبديل بين الكاميرا الأمامية والخلفية",
 
-  "Now facing the default rear camera":
-   "أصبحت الكاميرا الخلفية الافتراضية مواجهة الآن",
+  "Currently using the back camera":
+   "تستخدم الكاميرا الخلفية حالياً",
 
   "Now facing the selfie camera":
-   "أصبحت الكاميرا الأمامية مواجهة الآن",
+     "الآن تظهر الكاميرا الأمامية",
 
   " mode activated":
-   " تم تنشيط الوضع",
+   "تم تفعيل ",
 
   "Mode selection controls":
    "عناصر التحكم في اختيار الوضع",
@@ -176,13 +176,13 @@ final Map languageMap = {
    "محدد حاليًا",
 
   "Double tap to activate ":
-   "انقر نقرًا مزدوجًا لتنشيط وضع ",
+   "اضغط مرتين للتفعيل",
 
   " mode":
-   " وضع",
+   "الوضع",
 
   "Voice chat started. Please speak your question.":
-   "بدأت الدردشة الصوتية. يُرجى نطق سؤالك.",
+   "بدأت المحادثة الصوتية. الرجاء التحدث بسؤالك",
 
   "No voice input detected. Please try again.":
    "لم يتم الكشف عن إدخال صوتي. يُرجى المحاولة مرة أخرى.",
@@ -197,25 +197,25 @@ final Map languageMap = {
   "أنت مساعد ذكي مصمم لمساعدة المستخدمين المكفوفين. أجب دائمًا بطريقة واضحة ومختصرة، وتجنب أي إشارات بصرية. إذا كان السؤال غير واضح، فاطلب توضيحًا. تحدث وكأنك ترشد شخصًا لا يمكنه رؤية الشاشة. استخدم لغة بسيطة وسهلة الفهم. إذا كانت هناك أسئلة أو سياق سابق، فاعتمد عليه لتحسين دقة وفائدة الإجابة.\n\nسؤال المستخدم:",
   
   "Main screen with camera preview, controls, and mode selection":
-   "الشاشة الرئيسية مع معاينة الكاميرا وعناصر التحكم واختيار الوضع",
+   "الشاشة الرئيسية مع عرض الكاميرا، وعناصر التحكم، واختيار الوضع",
 
   "Tab bar for mode categories":
-   "شريط علامات التبويب لفئات الوضع",
+   "قائمة الأوضاع",
 
   "Describe":
    "وصف",
 
   "Picture Describe tab":
-   "علامة تبويب وصف الصورة",
+   "وضع وصف الصورة",
 
   "Read tab":
   "قراءة علامة التبويب",
 
   "Other Modes tab":
-   "علامة تبويب أوضاع أخرى",
+   "الأوضاع الأخرى",
 
   " selected":
-   " المحدد",
+   " تم تحديد",
 
   "picture describe":
    "وصف الصورة",
@@ -227,16 +227,16 @@ final Map languageMap = {
    "فيديو",
 
   "barcode":
-   "باركود",
+   "قارئ الباركود",
 
   "medication identifier":
-   "معرف الدواء",
+   "مُعرف الأدوية",
 
   "currency":
-   "عملة",
+    "قارئ العملات",
 
-  "outfit identifier":
-   "معرف الزي",
+  "clothing identifier":
+   "مُعرِّف الملابس",
 
    "Read":
    "يقرأ",

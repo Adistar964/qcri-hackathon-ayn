@@ -23,7 +23,7 @@ final List<String> allModes = [
   "barcode",
   "medication identifier",
   "currency",
-  "outfit identifier",
+  "clothing identifier",
 ];
 
 class HomePage extends StatefulWidget {
@@ -78,7 +78,7 @@ class _HomePageState extends State<HomePage>
     isEnglish = await prefs!.getString("language") == "EN";
     // await prefs!.setBool("first_time", true);
     String msg = translate("Picture Describe tab", isEnglish: isEnglish ?? true);
-    msg = "$msg ${translate(" selected", isEnglish: isEnglish ?? true)}";
+    msg = "${translate(" selected", isEnglish: isEnglish ?? true)} $msg";
     _announceToScreenReader(msg);
     if(mounted) setState(() {});
   }
@@ -98,7 +98,7 @@ class _HomePageState extends State<HomePage>
         _ => translate("Other Modes tab", isEnglish: isEnglish ?? true),
       };
 
-      _announceToScreenReader("$tabName ${translate(" selected", isEnglish: isEnglish ?? true)}");
+      _announceToScreenReader("${translate(" selected", isEnglish: isEnglish ?? true)} $tabName");
       _lastAnnouncedIndex = _tabController!.index; // Remember last announcement
     }
   }
@@ -787,7 +787,7 @@ class _HomePageState extends State<HomePage>
       currentMode = mode;
     });
     print("$mode mode selected");
-    _announceToScreenReader("${translate(mode, isEnglish: isEnglish ?? true)}${translate(" mode activated", isEnglish: isEnglish ?? true)}");
+   _announceToScreenReader( translate(" selected", isEnglish: isEnglish ?? true)+translate(mode, isEnglish: isEnglish ?? true));
   }
 
   IconData modeIcon(String mode) {
