@@ -57,7 +57,7 @@ class _HomePageState extends State<HomePage>
   int?
   _lastAnnouncedIndex; // For making sure the tab change doesnt repeatedly call announceScreenReader
 
-  bool _showInstructionsDialog = true; // Show on first launch
+  bool _showInstructionsDialog = false; // Show on first launch
 
   @override
   void initState() {
@@ -75,8 +75,11 @@ class _HomePageState extends State<HomePage>
     
   Future<void> detectLanguage() async {
     prefs = await SharedPreferences.getInstance();
-    isEnglish = prefs!.getString("language") != "EN";
+    isEnglish = await prefs!.getString("language") == "EN";
     // await prefs!.setBool("first_time", true);
+    String msg = translate("Picture Describe tab", isEnglish: isEnglish ?? true);
+    msg = "$msg ${translate(" selected", isEnglish: isEnglish ?? true)}";
+    _announceToScreenReader(msg);
     if(mounted) setState(() {});
   }
 
@@ -167,9 +170,9 @@ class _HomePageState extends State<HomePage>
     if (mounted) setState(() {});
   }
 
-  void _announceToScreenReader(String message) {
+  Future<void> _announceToScreenReader(String message) async {
     SemanticsBinding.instance.ensureSemantics();
-    SemanticsService.announce(message, TextDirection.ltr);
+    await SemanticsService.announce(message, TextDirection.ltr);
     print("speaking");
     flutterTts.stop();
     if(isEnglish == true){
@@ -202,12 +205,12 @@ class _HomePageState extends State<HomePage>
       setState(() {
         _isFlashOn = !_isFlashOn;
       });
-      _announceToScreenReader(
-        _isFlashOn ? translate("Flashlight turned on", isEnglish: isEnglish ?? true) : translate("Flashlight turned off", isEnglish: isEnglish ?? true),
-      );
+      // _announceToScreenReader(
+      //   _isFlashOn ? translate("Flashlight turned on", isEnglish: isEnglish ?? true) : translate("Flashlight turned off", isEnglish: isEnglish ?? true),
+      // );
     } catch (e) {
       print('Error toggling flash: $e');
-      _announceToScreenReader(translate("Failed to toggle flashlight", isEnglish: isEnglish ?? true));
+      // _announceToScreenReader(translate("Failed to toggle flashlight", isEnglish: isEnglish ?? true));
     }
   }
 
@@ -217,7 +220,9 @@ class _HomePageState extends State<HomePage>
     File? videoFile,
     bool speakReponse = true
   }) async {
-    var (apiKey, apiRoute, apiModel) = get_API_credentials(speakReponse ? true : false);
+    // var (apiKey, apiRoute, apiModel) = get_API_credentials(speakReponse ? true : false);
+    var (apiKey, apiRoute, apiModel) = get_API_credentials(true);
+    print("using $apiRoute with $apiKey for $apiModel");
     print("using $apiModel");
     final uri = Uri.parse(apiRoute);
     final headers = {
@@ -351,19 +356,19 @@ class _HomePageState extends State<HomePage>
             translate("You are an assistive AI for blind users. Please describe the contents of this image in detail, including objects, people, text, and any relevant context. Be concise, clear, and helpful.", isEnglish: isEnglish ?? true);
         await callFanarAPI(query: prompt, image: File(path));
       } else if (currentMode == "Read") {
-        if(isEnglish == true){
-          final inputImage = InputImage.fromFilePath(path);
-          final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
-          final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
-          textRecognizer.close();
-          // adding into context
-          _sessionContext.add({"role":"user","content":"Read this."});
-          _sessionContext.add({"role":"assistant","content":recognizedText.text});
-          _announceToScreenReader(recognizedText.text);
-        }else{
+        // if(isEnglish == true){
+        //   final inputImage = InputImage.fromFilePath(path);
+        //   final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+        //   final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+        //   textRecognizer.close();
+        //   // adding into context
+        //   _sessionContext.add({"role":"user","content":"Read this."});
+        //   _sessionContext.add({"role":"assistant","content":recognizedText.text.split("\n").join(" ")});
+        //   _announceToScreenReader(recognizedText.text.split("\n").join(" "));
+        // }else{
           prompt = translate("Extract and return the exact text from this document without any modifications, summaries, or added commentary. Preserve original formatting (e.g., line breaks, lists) to ensure screen-reader compatibility. If the document includes images or tables, provide their alt text or describe their structure. Do not alter, abbreviate, or paraphrase any content.", isEnglish: isEnglish ?? true);
           await callFanarAPI(query: prompt, image: File(path));
-        }
+        // }
 
       } else if (currentMode == "currency") {
         prompt = translate("You are a currency bill detection expert. Analyze the input image and:\n1. **Identify the denomination** (e.g., 1, 5, 10, 20, 50, 100).\n2. **Detect the currency name** in full official English (e.g., \"US Dollars\", \"Qatari Riyals\", \"Euros\").\n3. **Output format**: Strictly use: `<denomination> <currency_name>` \nExample: \"10 US Dollars\" or \"50 Qatari Riyals\"\n**Rules**:\n- If denomination/currency is ambiguous, return \"Unknown\".\n- Never use currency codes (e.g., USD, EUR) or symbols (\$, 8).\n- Prioritize visible text/design over background patterns.\n- Handle partial/obstructed bills by checking security features (holograms, watermarks).", isEnglish: isEnglish ?? true);
@@ -372,10 +377,15 @@ class _HomePageState extends State<HomePage>
         prompt = translate("Describe this outfit in terms of color, style, and use. Is it formal, casual, or something else? reply in only 1 sentence", isEnglish: isEnglish ?? true);
         await callFanarAPI(query: prompt, image: File(path));
       } else if (currentMode == "medication identifier") {
-        prompt =   "You are a strict visual OCR tool. Your only job is to extract the most prominent medicine name from a medicine box image.\nYou must:\n- ONLY return the brand name (e.g., Panadol, Dermadep)\n- NEVER explain, rephrase, or add commentary\n- NEVER output anything except the name itself\n- NEVER return full sentences or parentheses\nIf the image is blurry or unclear, return exactly:\nUnable to identify medicine name. Please try again by placing the front of the box clearly in front of the camera.\nIf more than one box is shown, return exactly:\nMultiple medicine boxes detected. Please show only one medicine at a time.\nIf the brand name contains symbols like ®️ or ™️, include them as-is.\n❗IMPORTANT: Return the name exactly as shown, with no commentary. Do NOT say “Note: ...”, do NOT talk like a chatbot.";
-        final brandName = await callFanarAPI(query: prompt, image: File(path), speakReponse: false);
-        print("brandName: $brandName");
-        getMedicineInfo(brandName);
+        prompt = "Extract the medicine name from this box.\nYou must: \nIf the image is blurry or unclear, return exactly:\nUnable to identify medicine name. Please try again by placing the front of the box clearly in front of the camera.\nIf more than one box is shown, return exactly:\nMultiple medicine boxes detected. Please show only one medicine at a time.”";
+        String brandName = await callFanarAPI(query: prompt, image: File(path), speakReponse: false);
+        if(brandName.toLowerCase().contains("identify") || brandName.toLowerCase().contains("unable") || brandName.toLowerCase().contains("box") || brandName.toLowerCase().contains("multiple")){
+          await _announceToScreenReader(brandName);
+        }else{
+          prompt = "what is the name of the medicine. Give only one word.";
+          brandName = await callFanarAPI(query: prompt, speakReponse: false);
+          getMedicineInfo(brandName);
+        }
         // await getMedicineInfo("calendula");
       } else if (currentMode == "barcode") {
         await _handleBarcodeScan(path);
@@ -512,6 +522,7 @@ class _HomePageState extends State<HomePage>
       toolbarHeight: 70,
       actionsPadding: EdgeInsets.symmetric(horizontal: 30),
       leading: Semantics(
+        excludeSemantics: true,
         button: true,
         label: translate('Open settings', isEnglish: isEnglish ?? true),
         child: IconButton(
@@ -525,15 +536,21 @@ class _HomePageState extends State<HomePage>
       ),
       actions: [
         Semantics(
+          excludeSemantics: true,
           button: true,
           label: translate('Instructions', isEnglish: isEnglish ?? true),
           child: IconButton(
             iconSize: 40,
             icon: Icon(Icons.help_outline),
+            // onPressed: (){},
             onPressed: () {
-              // _announceToScreenReader(
-              //   translate("Instructions opened. Please swipe right to hear available modes and controls.", isEnglish: isEnglish ?? true),
-              // );
+              print("opened instructions");
+              _announceToScreenReader(
+                translate("Instructions opened. Please scroll through every instructions given.", isEnglish: isEnglish ?? true),
+              );
+              setState(() {
+                _showInstructionsDialog = true;
+              });
               if(_showInstructionsDialog){
                 instructionsModal(context, translate, isEnglish, () {
                   setState(() {
@@ -552,6 +569,7 @@ class _HomePageState extends State<HomePage>
   Widget _buildCameraPreview() {
     if (_initializeControllerFuture == null) {
       return Semantics(
+        excludeSemantics: true,
         label: translate('Camera loading', isEnglish: isEnglish ?? true),
         child: Container(
           color: Colors.black,
@@ -569,11 +587,13 @@ class _HomePageState extends State<HomePage>
               _cameraController != null &&
               _cameraController!.value.isInitialized) {
             return Semantics(
+              excludeSemantics: true,
               label: translate('Live camera preview', isEnglish: isEnglish ?? true),
               child: CameraPreview(_cameraController!),
             );
           } else if (snapshot.connectionState == ConnectionState.waiting) {
             return Semantics(
+              excludeSemantics: true,
               label: translate('Camera loading', isEnglish: isEnglish ?? true),
               child: Container(
                 color: Colors.black,
@@ -631,6 +651,7 @@ class _HomePageState extends State<HomePage>
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 Semantics(
+                  excludeSemantics: true,
                   button: true,
                   label: translate('Voice chat', isEnglish: isEnglish ?? true),
                   hint: translate('Double tap to activate voice chat', isEnglish: isEnglish ?? true),
@@ -647,6 +668,7 @@ class _HomePageState extends State<HomePage>
                 ),
                 Expanded(
                   child: Semantics(
+                    excludeSemantics: true,
                     button: true,
                     label: currentMode == "video"
                         ? (_isRecording
@@ -711,15 +733,30 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
                 Semantics(
+                  excludeSemantics: true,
                   button: true,
                   label: translate('Change camera', isEnglish: isEnglish ?? true),
-                  hint: translate('Double tap to switch between front and back camera', isEnglish: isEnglish ?? true),
+                  // hint: translate('Double tap to switch between front and back camera', isEnglish: isEnglish ?? true),
+                  // onTap: () async {
+                  //   final currentCameraIndex = _cameras.indexOf(
+                  //     _cameraController!.description,
+                  //   );
+                  //   final nextCameraIndex = (currentCameraIndex + 1) % 2;
+                  //   await _initCamera(nextCameraIndex);
+                  //   _announceToScreenReader(
+                  //     nextCameraIndex == 0
+                  //       ? translate("Now facing the default rear camera", isEnglish: isEnglish ?? true)
+                  //       : translate("Now facing the selfie camera", isEnglish: isEnglish ?? true),
+                  //   );
+                  //   // setState(() => _currentCameraIndex = nextCameraIndex); // Update tracked index
+                  // },
                   child: IconButton(
                     icon: const Icon(
                       Icons.cameraswitch,
                       color: Colors.white,
                       size: 40,
                     ),
+                    // onPressed: (){},
                     onPressed: () async {
                       final currentCameraIndex = _cameras.indexOf(
                         _cameraController!.description,
@@ -832,22 +869,29 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  bool _hasSent = false;
+
   Future<void> _startVoiceChat() async {
     if (!_isListening) {
-      // Ensure TTS finishes before listening
+      _hasSent = false; // Reset the flag before starting
       await flutterTts.awaitSpeakCompletion(true);
-      await flutterTts.speak(translate("Voice chat started. Please speak your question.", isEnglish: isEnglish ?? true));
+      await _announceToScreenReader(
+        translate("Voice chat started. Please speak your question.", isEnglish: isEnglish ?? true),
+      );
       await flutterTts.awaitSpeakCompletion(true);
+
       setState(() {
         _isListening = true;
         _voiceInput = '';
       });
+
       bool available = await _speech.initialize(
         onStatus: (val) async {
-          if (val == 'done' || val == 'notListening') {
+          if ((val == 'done' || val == 'notListening') && !_hasSent) {
+            _hasSent = true; // Prevent future calls
             setState(() => _isListening = false);
             _speech.stop();
-            print("listened");
+
             if (_voiceInput.trim().isNotEmpty) {
               await _sendVoiceToFanar(_voiceInput.trim());
             } else {
@@ -859,9 +903,12 @@ class _HomePageState extends State<HomePage>
         },
         onError: (val) {
           setState(() => _isListening = false);
-          _announceToScreenReader(translate("Voice recognition error. Please try again.", isEnglish: isEnglish ?? true));
+          _announceToScreenReader(
+            translate("Voice recognition error. Please try again.", isEnglish: isEnglish ?? true),
+          );
         },
       );
+
       if (available) {
         _speech.listen(
           onResult: (val) {
@@ -873,13 +920,16 @@ class _HomePageState extends State<HomePage>
           localeId: isEnglish == true ? 'en_US' : 'ar_AR',
         );
       } else {
-        _announceToScreenReader(translate("Speech recognition not available.", isEnglish: isEnglish ?? true));
+        _announceToScreenReader(
+          translate("Speech recognition not available.", isEnglish: isEnglish ?? true),
+        );
       }
     } else {
       setState(() => _isListening = false);
       _speech.stop();
     }
   }
+
 
   Future<void> _sendVoiceToFanar(String userQuery) async {
     String prompt = translate("You are an assistive AI designed to help blind users. Always answer clearly, concisely. When responding, act as a guide for someone who cannot see the screen. Use simple and accessible language. If any previous questions or context are available, use them to enhance the accuracy and relevance of your response.\nUser question: ", isEnglish: isEnglish ?? true);

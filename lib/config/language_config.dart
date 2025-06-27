@@ -106,8 +106,8 @@ final Map languageMap = {
   "Instructions":
    "التعليمات",
 
-  "Instructions opened. Please swipe right to hear available modes and controls.":
-   "تم فتح التعليمات. يُرجى التمرير لليمين لسماع الأوضاع وعناصر التحكم المتاحة.",
+  "Instructions opened. Please scroll through every instructions given.":
+  "تم فتح التعليمات. يرجى التمرير خلال كل تعليمات مقدمة.",
 
   "Camera loading":
    "جارٍ تحميل الكاميرا",
