@@ -517,8 +517,8 @@ class _HomePageState extends State<HomePage>
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.black,
-      foregroundColor: Colors.white,
+      backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+      foregroundColor: Colors.red,
       toolbarHeight: 70,
       actionsPadding: EdgeInsets.symmetric(horizontal: 30),
       leading: Semantics(
@@ -589,13 +589,18 @@ class _HomePageState extends State<HomePage>
             return Semantics(
               excludeSemantics: true,
               label: translate('Live camera preview', isEnglish: isEnglish ?? true),
-              child: FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: _cameraController!.value.previewSize!.height,
-                  height: _cameraController!.value.previewSize!.width,
-                  child: CameraPreview(_cameraController!),
-                ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _cameraController!.value.previewSize!.height,
+                      height: _cameraController!.value.previewSize!.width,
+                      child: CameraPreview(_cameraController!),
+                    ),
+                  ),
+                ],
               ),
             );
           } else if (snapshot.connectionState == ConnectionState.waiting) {
@@ -823,7 +828,7 @@ class _HomePageState extends State<HomePage>
       container: true,
       label: translate('Mode selection controls', isEnglish: isEnglish ?? true),
       child: Container(
-        color: Colors.black,
+        color: const Color.fromARGB(50, 0, 0, 0),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -955,48 +960,114 @@ class _HomePageState extends State<HomePage>
       container: true,
       label: translate('Main screen with camera preview, controls, and mode selection',isEnglish: isEnglish ?? true),
       child: Scaffold(
-        appBar: _buildAppBar(),
+        // appBar: _buildAppBar(),
         body: Column(
           children: [
             Expanded(
               child: Stack(
                 children: [
                   Positioned.fill(child: _buildCameraPreview()),
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildBottomControls(),
-                        SizedBox(
-                          height: 88,
-                          child: Semantics(
-                            label: translate('Tab bar for mode categories',isEnglish: isEnglish ?? true),
-                            child: Container(
-                              color: Colors.black,
-                              child: TabBar(
-                                controller: _tabController,
-                                indicatorColor: Colors.cyan,
-                                labelColor: Colors.cyan,
-                                labelStyle: TextStyle(fontSize: 20),
-                                unselectedLabelColor: Colors.white,
-                                tabs: [
-                                  Tab(text: translate("Describe",isEnglish: isEnglish ?? true)),
-                                  Tab(text: translate("Read",isEnglish: isEnglish ?? true)),
-                                  Tab(text: translate("More",isEnglish: isEnglish ?? true)),
-                                ],
+                  // Inline AppBar at the top, above the bottom-aligned column
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: SafeArea(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        height: 70,
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(0, 0, 0, 0),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Semantics(
+                              excludeSemantics: true,
+                              button: true,
+                              label: translate('Open settings', isEnglish: isEnglish ?? true),
+                              child: IconButton(
+                                padding: EdgeInsets.zero,
+                                iconSize: 40,
+                                icon: const Icon(Icons.settings, color: Colors.white),
+                                onPressed: () {
+                                  _announceToScreenReader(translate("Settings opened", isEnglish: isEnglish ?? true));
+                                },
                               ),
                             ),
+                            Semantics(
+                              excludeSemantics: true,
+                              button: true,
+                              label: translate('Instructions', isEnglish: isEnglish ?? true),
+                              child: IconButton(
+                                iconSize: 40,
+                                icon: const Icon(Icons.help_outline, color: Colors.white),
+                                onPressed: () {
+                                  _announceToScreenReader(
+                                    translate("Instructions opened. Please scroll through every instructions given.", isEnglish: isEnglish ?? true),
+                                  );
+                                  setState(() {
+                                    _showInstructionsDialog = true;
+                                  });
+                                  if (_showInstructionsDialog) {
+                                    instructionsModal(context, translate, isEnglish, () {
+                                      setState(() {
+                                        _showInstructionsDialog = false;
+                                      });
+                                      Navigator.of(context).pop();
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Replacing bottom controls and tab bar with three Positioned widgets:
+                  Positioned(
+                    bottom: 180,
+                    left: 0,
+                    right: 0,
+                    child: SizedBox(
+                      height: 88,
+                      child: Semantics(
+                        label: translate('Tab bar for mode categories', isEnglish: isEnglish ?? true),
+                        child: Container(
+                          color: Colors.black.withOpacity(0.4),
+                          child: TabBar(
+                            controller: _tabController,
+                            indicatorColor: Colors.cyan,
+                            labelColor: Colors.cyan,
+                            labelStyle: TextStyle(fontSize: 20),
+                            unselectedLabelColor: Colors.white,
+                            tabs: [
+                              Tab(text: translate("Describe", isEnglish: isEnglish ?? true)),
+                              Tab(text: translate("Read", isEnglish: isEnglish ?? true)),
+                              Tab(text: translate("More", isEnglish: isEnglish ?? true)),
+                            ],
                           ),
                         ),
-                        SizedBox(
-                          height: 100,
-                          child: _tabController!.index == 2
-                              ? _buildModeButtons(otherModes)
-                              : Container(color: Colors.black),
-                        ),
-                      ],
+                      ),
                     ),
+                  ),
+                  Positioned(
+                    bottom: 100,
+                    left: 0,
+                    right: 0,
+                    child: SizedBox(
+                      height: 100,
+                      child: _tabController!.index == 2
+                          ? _buildModeButtons(otherModes)
+                          : Container(color: Colors.transparent),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: _buildBottomControls(),
                   ),
                 ],
               ),
