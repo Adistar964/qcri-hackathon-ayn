@@ -180,7 +180,7 @@ class _HomePageState extends State<HomePage>
     }else{
       flutterTts.setLanguage("ar");
     }
-    flutterTts.speak(message);
+    await flutterTts.speak(message);
   }
 
   @override
@@ -223,7 +223,6 @@ class _HomePageState extends State<HomePage>
     // var (apiKey, apiRoute, apiModel) = get_API_credentials(speakReponse ? true : false);
     var (apiKey, apiRoute, apiModel) = get_API_credentials(true);
     print("using $apiRoute with $apiKey for $apiModel");
-    print("using $apiModel");
     final uri = Uri.parse(apiRoute);
     final headers = {
       'Authorization': 'Bearer $apiKey',
@@ -233,8 +232,9 @@ class _HomePageState extends State<HomePage>
     dynamic messages;
 
     if(image == null && videoFile == null){
-      apiModel = "Fanar"; // better with text handling
+      apiModel = "Fanar-C-1-8.7B"; // better with text handling
     }
+    print("using $apiModel");
     // Reset context if media is used
     if (image != null || videoFile != null) {
       _sessionContext = [];
@@ -366,15 +366,17 @@ class _HomePageState extends State<HomePage>
         //   _sessionContext.add({"role":"assistant","content":recognizedText.text.split("\n").join(" ")});
         //   _announceToScreenReader(recognizedText.text.split("\n").join(" "));
         // }else{
-          prompt = translate("Extract and return the exact text from this document without any modifications, summaries, or added commentary. Preserve original formatting (e.g., line breaks, lists) to ensure screen-reader compatibility. If the document includes images or tables, provide their alt text or describe their structure. Do not alter, abbreviate, or paraphrase any content.", isEnglish: isEnglish ?? true);
+          prompt = translate("Only Give me all the text in this picture and do not rephrase anything.", isEnglish: isEnglish ?? true);
           await callFanarAPI(query: prompt, image: File(path));
         // }
 
       } else if (currentMode == "currency") {
-        prompt = translate("You are a currency bill detection expert. Analyze the input image and:\n1. **Identify the denomination** (e.g., 1, 5, 10, 20, 50, 100).\n2. **Detect the currency name** in full official English (e.g., \"US Dollars\", \"Qatari Riyals\", \"Euros\").\n3. **Output format**: Strictly use: `<denomination> <currency_name>` \nExample: \"10 US Dollars\" or \"50 Qatari Riyals\"\n**Rules**:\n- If denomination/currency is ambiguous, return \"Unknown\".\n- Never use currency codes (e.g., USD, EUR) or symbols (\$, 8).\n- Prioritize visible text/design over background patterns.\n- Handle partial/obstructed bills by checking security features (holograms, watermarks).", isEnglish: isEnglish ?? true);
-        await callFanarAPI(query: prompt, image: File(path));
+        print("in currency mode takePic");
+        prompt = translate('"If the paper is green, return “1 Qatari Riyal”; if purple or violet, return “5 Qatari Riyals”; if blue, return “10 Qatari Riyals”; if orange, return “50 Qatari Riyals”; if brown, return “200 Qatari Riyals”; if teal or blue-green, return “100 Qatari Riyals”; if red, return “500 Qatari Riyals”."', isEnglish: isEnglish ?? true);
+        await callFanarAPI(query: prompt, image: File(path), speakReponse: false);
+        await callFanarAPI(query: "What is the the bill then? Answer in 3 words");
       } else if (currentMode == "outfit identifier") {
-        prompt = translate("Describe this outfit in terms of color, style, and use. Is it formal, casual, or something else? reply in only 1 sentence", isEnglish: isEnglish ?? true);
+        prompt = translate("Describe this outfit in terms of color, style, and use. Is it formal, casual, or something else? reply in only 1 sentence with 3 words at max", isEnglish: isEnglish ?? true);
         await callFanarAPI(query: prompt, image: File(path));
       } else if (currentMode == "medication identifier") {
         prompt = "Extract the medicine name from this box.\nYou must: \nIf the image is blurry or unclear, return exactly:\nUnable to identify medicine name. Please try again by placing the front of the box clearly in front of the camera.\nIf more than one box is shown, return exactly:\nMultiple medicine boxes detected. Please show only one medicine at a time.”";
@@ -878,7 +880,7 @@ class _HomePageState extends State<HomePage>
       await _announceToScreenReader(
         translate("Voice chat started. Please speak your question.", isEnglish: isEnglish ?? true),
       );
-      await flutterTts.awaitSpeakCompletion(true);
+      await flutterTts.awaitSpeakCompletion(true); 
 
       setState(() {
         _isListening = true;
