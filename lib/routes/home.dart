@@ -589,7 +589,14 @@ class _HomePageState extends State<HomePage>
             return Semantics(
               excludeSemantics: true,
               label: translate('Live camera preview', isEnglish: isEnglish ?? true),
-              child: CameraPreview(_cameraController!),
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _cameraController!.value.previewSize!.height,
+                  height: _cameraController!.value.previewSize!.width,
+                  child: CameraPreview(_cameraController!),
+                ),
+              ),
             );
           } else if (snapshot.connectionState == ConnectionState.waiting) {
             return Semantics(
