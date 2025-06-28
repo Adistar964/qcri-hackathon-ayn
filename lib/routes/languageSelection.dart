@@ -16,7 +16,7 @@ class LanguageSelectionPage extends StatefulWidget {
 class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
   final stt.SpeechToText _speech = stt.SpeechToText();
   final FlutterTts flutterTts = FlutterTts();
-  Timer? _inactivityTimer;
+  // Timer? _inactivityTimer;
 
   final String _welcomeMessageEn =
       "Welcome to AYN. Please select a language from the buttons given.";
@@ -28,24 +28,24 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
     super.initState();
     flutterTts.awaitSpeakCompletion(true);
     speakInstructions();
-    startInactivityTimer();
+    // startInactivityTimer();
   }
 
   @override
   void dispose() {
-    _inactivityTimer?.cancel();
+    // _inactivityTimer?.cancel();
     super.dispose();
   }
 
-  void startInactivityTimer() {
-    _inactivityTimer?.cancel();
-    _inactivityTimer = Timer.periodic(const Duration(seconds: 45), (_) {
-      speakInstructions();
-    });
-  }
+  // void startInactivityTimer() {
+  //   // _inactivityTimer?.cancel();
+  //   _inactivityTimer = Timer.periodic(const Duration(seconds: 45), (_) {
+  //     speakInstructions();
+  //   });
+  // }
 
   Future<void> speakInstructions() async {
-    _inactivityTimer?.cancel();
+    // _inactivityTimer?.cancel();
     await _announceToScreenReader(_welcomeMessageAr, direction: TextDirection.rtl);
     await Future.delayed(const Duration(milliseconds: 800));
     await _announceToScreenReader(_welcomeMessageEn, direction: TextDirection.ltr);
@@ -65,7 +65,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
   }
 
   Future<void> setLanguage(String langCode) async {
-    _inactivityTimer?.cancel();
+    // _inactivityTimer?.cancel();
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString("language", langCode);
     await prefs.setBool("first_time", false);
