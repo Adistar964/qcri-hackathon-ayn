@@ -561,9 +561,17 @@ class _HomePageState extends State<HomePage>
               _announceToScreenReader(
                 translate("Instructions opened. Please scroll through every instructions given.", isEnglish: isEnglish ?? true),
               );
-              setState(() {
-                _showInstructionsDialog = true;
-              });
+                setState(() {
+                  _showInstructionsDialog = true;
+                });
+              if(_showInstructionsDialog == true){
+                instructionsModal(context, translate, isEnglish, () {
+                  setState(() {
+                    _showInstructionsDialog = false;
+                  });
+                  Navigator.of(context).pop();
+                });
+              }
             },
           ),
         ),
@@ -1002,13 +1010,6 @@ class _HomePageState extends State<HomePage>
                 ],
               ),
             ),
-              if(_showInstructionsDialog)
-                instructionsModal(context, translate, isEnglish, () {
-                  setState(() {
-                    _showInstructionsDialog = false;
-                  });
-                  Navigator.of(context).pop();
-                }),
           ],
         ),
       ),

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -16,19 +15,18 @@ class LanguageSelectionPage extends StatefulWidget {
 
 class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
   final stt.SpeechToText _speech = stt.SpeechToText();
+  final FlutterTts flutterTts = FlutterTts();
+  Timer? _inactivityTimer;
+
   final String _welcomeMessageEn =
       "Welcome to AYN. Please select a language from the buttons given.";
   final String _welcomeMessageAr =
-      "مرحبًا بكم في أين. يرجى اختيار لغة من الأزرار المعروضة.";
-
-  Timer? _inactivityTimer;
-
-  final FlutterTts flutterTts = FlutterTts();
+      "مرحبًا بكم في عين. يرجى اختيار لغة من الأزرار المعروضة.";
 
   @override
   void initState() {
     super.initState();
-    flutterTts.awaitSpeakCompletion(true); // Ensures speaking completes before continuing
+    flutterTts.awaitSpeakCompletion(true);
     speakInstructions();
     startInactivityTimer();
   }
@@ -39,24 +37,6 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
     super.dispose();
   }
 
-  Future<void> _announceToScreenReader(String message, {TextDirection? direction}) async {
-    SemanticsBinding.instance.ensureSemantics();
-    final isArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(message);
-    SemanticsService.announce(
-      message,
-      direction ?? (isArabic ? TextDirection.rtl : TextDirection.ltr),
-    );
-    print("speaking");
-
-    await flutterTts.stop();
-    if (!isArabic) {
-      await flutterTts.setLanguage("en");
-    } else {
-      await flutterTts.setLanguage("ar");
-    }
-    await flutterTts.speak(message);
-  }
-
   void startInactivityTimer() {
     _inactivityTimer?.cancel();
     _inactivityTimer = Timer.periodic(const Duration(seconds: 45), (_) {
@@ -65,188 +45,141 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
   }
 
   Future<void> speakInstructions() async {
-    _inactivityTimer?.cancel(); // Pause while speaking
-
+    _inactivityTimer?.cancel();
     await _announceToScreenReader(_welcomeMessageAr, direction: TextDirection.rtl);
     await Future.delayed(const Duration(milliseconds: 800));
     await _announceToScreenReader(_welcomeMessageEn, direction: TextDirection.ltr);
     await Future.delayed(const Duration(milliseconds: 2500));
+  }
 
-    startInactivityTimer(); // Restart timer after speaking
+  Future<void> _announceToScreenReader(String message, {TextDirection? direction}) async {
+    SemanticsBinding.instance.ensureSemantics();
+    final isArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(message);
+    SemanticsService.announce(
+      message,
+      direction ?? (isArabic ? TextDirection.rtl : TextDirection.ltr),
+    );
+    await flutterTts.stop();
+    await flutterTts.setLanguage(isArabic ? "ar" : "en");
+    await flutterTts.speak(message);
   }
 
   Future<void> setLanguage(String langCode) async {
     _inactivityTimer?.cancel();
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString("language", langCode);
-
-    if (langCode == 'EN') {
-      await _announceToScreenReader("English selected", direction: TextDirection.ltr);
-    } else {
-      await _announceToScreenReader("تم اختيار اللغة العربية", direction: TextDirection.rtl);
-    }
-
     await prefs.setBool("first_time", false);
 
-    // Ask if user wants instructions
-    await _announceToScreenReader(
-      langCode == 'EN'
-        ? "Would you like to hear the instructions for using the app? Please say yes or no."
-        : "هل ترغب في سماع التعليمات الخاصة باستخدام التطبيق؟ قل نعم أو لا.",
-      direction: langCode == 'EN' ? TextDirection.ltr : TextDirection.rtl,
-    );
-
-    final localeId = langCode == 'EN' ? 'en_US' : 'ar_SA';
-
-    bool available = await _speech.initialize(
-      onStatus: (status) => print("Speech status: $status"),
-      onError: (error) => print("Speech error: $error"),
-    );
-
-    String resultText = "";
-    if (available) {
-      _speech.listen(
-        localeId: localeId,
-        onResult: (result) {
-          resultText = result.recognizedWords.toLowerCase();
-        },
-      );
-
-      await Future.delayed(const Duration(seconds: 6));
-      await _speech.stop();
-    }
-
-    bool wantsInstructions = false;
-
-    if (langCode == 'EN') {
-      wantsInstructions = resultText.contains("yes");
-    } else {
-      wantsInstructions = resultText.contains("نعم");
-    }
-
-    if (wantsInstructions) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      await _announceToScreenReader(
-        langCode == 'EN'
-          ? "Instructions: Triple tap anywhere to switch the camera. Double tap to take a photo and ask your question. Long press to record a video. After image or video is captured, you can ask a question using your voice. The assistant will describe what it sees and answer."
-          : "التعليمات: اضغط ثلاث مرات في أي مكان لتبديل الكاميرا. اضغط مرتين لالتقاط صورة وطرح سؤالك. اضغط لفترة طويلة لتسجيل فيديو. بعد التقاط الصورة أو الفيديو، يمكنك أن تسأل سؤالاً باستخدام صوتك. سيقوم المساعد بوصف ما يراه والإجابة عليه.",
-        direction: langCode == 'EN' ? TextDirection.ltr : TextDirection.rtl,
-      );
-      await Future.delayed(const Duration(milliseconds: 4000));
-    } else {
-      await _announceToScreenReader(
-        langCode == 'EN'
-          ? "Skipping instructions."
-          : "سيتم تخطي التعليمات.",
-        direction: langCode == 'EN' ? TextDirection.ltr : TextDirection.rtl,
-      );
-      await Future.delayed(const Duration(milliseconds: 1000));
-    }
+    // await _announceToScreenReader(
+    //   langCode == 'EN' ? "English selected" : "تم اختيار اللغة العربية",
+    //   direction: langCode == 'EN' ? TextDirection.ltr : TextDirection.rtl,
+    // );
 
     context.go("/");
   }
 
-  Widget languageButton(String label, String langCode) {
+  Widget languageButton({
+    required String label,
+    required String langCode,
+    required String semanticsLabel,
+  }) {
     return Semantics(
-      label: label == "EN" ? "Select English Button" : "حدد الزر العربي",
+      label: semanticsLabel,
       button: true,
       child: GestureDetector(
-        onTap: () {
-          Feedback.forTap(context);
-          setLanguage(langCode);
-        },
+        onTap: () => setLanguage(langCode),
         child: Container(
-          width: double.infinity,
-          height: 90,
-          margin: const EdgeInsets.symmetric(vertical: 12),
+          height: 60,
+          margin: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF0288D1), Color(0xFF03A9F4)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                offset: const Offset(0, 4),
-                blurRadius: 6,
+            color: Colors.lightBlueAccent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+                child: Text(
+                  label,
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                ),
               ),
-            ],
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: 1.2,
-            ),
-          ),
         ),
       ),
     );
   }
 
-
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    body: Stack(
-      children: [
-        // Image background from assets
-        SizedBox.expand(
-          child: Image.asset(
-            'bg.jpg',
-            fit: BoxFit.cover,
-          ),
-        ),
-
-        // Blur overlay
-        BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-          child: Container(
-            color: Colors.white.withOpacity(0.1), // Soft light overlay
-          ),
-        ),
-
-        // Foreground content (language selection)
-        SafeArea(
-          child: FocusTraversalGroup(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Semantics(
-                      header: true,
-                      label: 'Language selection screen',
-                      child: const Text(
-                        "Select Language",
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(height: 60),
-                    languageButton("EN", "EN"),
-                    const SizedBox(height: 40),
-                    languageButton("AR", "AR"),
-                  ],
-                ),
-              ),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Opacity(
+            opacity: 0.9,
+            child: Image.asset(
+              'assets/bg2.jpg', // <- replace with your background image
+              fit: BoxFit.cover,
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
-
+          SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Semantics(
+                  header: true,
+                  child: Column(
+                    children: const [
+                      Text(
+                        "WELCOME",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        "Let's Get Started",
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 60),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  decoration: BoxDecoration(
+                    // color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        "Select Language",
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      const SizedBox(height: 10),
+                      languageButton(
+                        label: "ENGLISH",
+                        langCode: "EN",
+                        semanticsLabel: "Select English Button",
+                      ),
+                      languageButton(
+                        label: "العربي",
+                        langCode: "AR",
+                        semanticsLabel: "حدد الزر العربي",
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
