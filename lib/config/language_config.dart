@@ -62,7 +62,7 @@ final Map languageMap = {
   "فقط أعطني كل النص الموجود في هذه الصورة ولا تعيد صياغة أي شيء.",
 
   '"If the paper is green, return “1 Qatari Riyal”; if purple or violet, return “5 Qatari Riyals”; if blue, return “10 Qatari Riyals”; if orange, return “50 Qatari Riyals”; if brown, return “200 Qatari Riyals”; if teal or blue-green, return “100 Qatari Riyals”; if red, return “500 Qatari Riyals”."':
-   "أنت خبير في الكشف عن العملات الورقية. قم بتحليل صورة الإدخال و:\n1. **تحديد الفئة** (على سبيل المثال، 1، 5، 10، 20، 50، 100).\n2. **اكتشاف اسم العملة** باللغة الإنجليزية الرسمية الكاملة (على سبيل المثال، \"US Dollars\"، \"Qatari Riyals\"، \"Euros\").\n3. **تنسيق الإخراج**: استخدم بدقة: `<الفئة> <اسم_العملة>` \nمثال: \"10 US Dollars\" أو \"50 Qatari Riyals\"\n**القواعد**:\n- إذا كانت الفئة/العملة غامضة، فأرجع \"Unknown\".\n- لا تستخدم أبدًا رموز العملات (مثل USD، EUR) أو الرموز (\$, 8).\n- إعطاء الأولوية للنص/التصميم المرئي على الأنماط الخلفية.\n- التعامل مع الأوراق النقدية الجزئية/المعاقة عن طريق فحص ميزات الأمان (الهولوغرامات، العلامات المائية).",
+   "إذا كانت الورقة خضراء، أعد ”1 ريال قطري“؛ إذا كانت أرجوانية أو بنفسجية، أعد ”5 ريالات قطرية“؛ إذا كانت زرقاء، أعد ”10 ريالات قطرية“؛ إذا كانت برتقالية، أعد ”50 ريالاً قطرياً“؛ إذا كانت بنية، أعد ”200 ريال قطري“؛ إذا كانت خضراء مائلة إلى الأزرق أو الأزرق المائل إلى الأخضر، أعد ”100 ريال قطري“؛ إذا كانت حمراء، أعد ”500 ريال قطري“.",
 
   "Describe this outfit in terms of color, style, and use. Is it formal, casual, or something else? reply in only 1 sentence":
    "صف هذا الزي من حيث اللون والأسلوب والاستخدام. هل هو رسمي أم كاجوال أم شيء آخر؟ أجب في جملة واحدة فقط",
@@ -209,7 +209,7 @@ final Map languageMap = {
    "وضع وصف الصورة",
 
   "Read tab":
-  "قراءة علامة التبويب",
+  "وضع القراءة",
 
   "Other Modes tab":
    "الأوضاع الأخرى",
@@ -239,24 +239,119 @@ final Map languageMap = {
    "مُعرِّف الملابس",
 
    "Read":
-   "يقرأ",
+    "قراءة",
 
    "More":
-   "أكثر",
+    "أكثر",
 
    "Failed to detect the medicine":
-   "فشل في اكتشاف الدواء",
+    "فشل في اكتشاف الدواء",
 
-   "Explain this medicine in clear, simple spoken language: what it's for, how to use it, and any important warnings. Avoid medical jargon. Do not include phrases like 'here’s a simple explanation' or references to the user being blind. JSON:":
-  "اشرح هذا الدواء بلغة عربية مبسطة وواضحة: ما استخدامه، وكيفية استعماله، والتحذيرات المهمة. تجنب المصطلحات الطبية المعقدة. لا تذكر عبارات مثل 'شرح لمستخدم كفيف' أو أي إشارات إلى المستخدم. JSON: ",
+  "Explain this medicine in clear, simple spoken language: what it's for, how to use it, and any important warnings. Avoid medical jargon. Do not include phrases like 'here’s a simple explanation' or references to the user being blind. JSON:":
+    "اشرح هذا الدواء بلغة عربية مبسطة وواضحة: ما استخدامه، وكيفية استعماله، والتحذيرات المهمة. تجنب المصطلحات الطبية المعقدة. لا تذكر عبارات مثل 'شرح لمستخدم كفيف' أو أي إشارات إلى المستخدم. JSON: ",
 
   "Return only the product name from the following JSON with no extra words or explanation:":
-  "Return only the product name from the following JSON with no extra words or explanation:",
+    "قم بإرجاع اسم المنتج فقط من ملف JSON التالي بدون كلمات أو شرح إضافي",
 
   "Now facing the default rear camera":
-  "Now facing the default rear camera",
+    "الآن في اتجاه الكاميرا الخلفية",
 
   "Only strictly answer what the user asked , do not include extra commments or explanations, user question:":
-  "Only strictly answer what the user asked , do not include extra commments or explanations, user question:"
+    "فقط أجب بدقة على ما طلبه المستخدم، لا تدرج تعليقات أو تفسيرات إضافية، سؤال المستخدم:",
 
+  "Instructions dialog": 
+   "حوار التعليمات",
+
+  "Welcome to AYN" :
+   "مرحبًا بك في عين",
+
+  "Instructions content" :
+   "محتوى التعليمات",
+
+  "App introduction" :
+   "مقدمة التطبيق",
+
+  "This app helps blind or visually impaired users understand their surroundings using the phone’s camera. It supports both English and Arabic. It can describe scenes, objects, people, read text, identify barcodes, medications, currency, and clothing, and responds to voice commands." :
+    "يساعد هذا التطبيق المستخدمين المكفوفين أو ضعاف البصر على فهم محيطهم باستخدام كاميرا الهاتف. يدعم التطبيق اللغتين الإنجليزية والعربية. يمكنه وصف المشاهد والأشياء والأشخاص، قراءة النصوص، تحديد الرموز الباركود، الأدوية، العملات والملابس، ويستجيب للأوامر الصوتية.",
+
+  "Navigation overview" :
+   "نظرة عامة على التنقل",
+
+  "Navigating is simple. Top-left has Settings. Top-right has Help. Double-tap either to access them." :
+   "التنقل بسيط. في الزاوية العلوية اليسرى توجد الإعدادات. في الزاوية العلوية اليمنى توجد المساعدة. اضغط مرتين على أي منهما للوصول إليهما.",
+
+  "Tab descriptions" :
+   "وصف الأوضاع",
+
+  "At the bottom, swipe between three tabs: Describe (scene descriptions), Read (text reader), and More (special modes)." :
+   "في الأسفل، اسحب بين ثلاثة أوضاع: وصف (وصف المشاهد)، قراءة (قارئ النصوص)، وأكثر (أوضاع الاخره).",
+
+  "Camera button usage" :
+   "استخدام زر الكاميرا",
+
+  "In Describe or Read mode, double-tap the center button to capture. In Video mode, it starts or stops recording." :
+   "في وضع الوصف أو القراءة، اضغط مرتين على الزر الوسط لالتقاط الصورة. في وضع الفيديو، يبدأ أو يوقف التسجيل.",
+
+  "Microphone and camera switch" :
+   "زر الميكروفون وتبديل الكاميرا",
+
+  "On the left is the Microphone button for voice commands. On the right is the Camera Switch to toggle front/rear camera." :
+    "على اليسار يوجد زر الميكروفون للأوامر الصوتية. على اليمين يوجد زر تبديل الكاميرا للتبديل بين الكاميرا الأمامية والخلفية.",
+
+  "Modes list" :
+   "قائمة الأوضاع",
+
+  "Modes include: Picture Describe, Document Reader, Video Mode, Barcode Scanner, Medication ID, Currency ID, Outfit ID, and Voice Mode." :
+   "تشمل الأوضاع: وصف الصورة، قارئ المستندات، وضع الفيديو، قارء الباركود، مُعرف الأدوية، مُعرف العملات، مُعرف الملابس، ووضع الصوت.",
+
+  "Voice mode behavior" :
+   "سلوك وضع الصوت",
+
+  "Voice mode answers only based on previous images. It does not access the live camera. Use Describe mode for real-time feedback." :
+   "وضع الصوت يجيب فقط بناءً على الصور السابقة. لا يصل إلى الكاميرا الحية. استخدم وضع الوصف للحصول على ردود فعل في الوقت الحقيقي.",
+
+  "Voice examples" :
+   "أمثلة على الأوامر الصوتية",
+
+  "After capturing, ask: “What did you see earlier?”, “Read the text again”, or “What was the medication name?" :
+   "بعد الالتقاط، اسأل: “ماذا رأيت سابقًا؟”، “اقرأ النص مرة أخرى”، أو “ما اسم الدواء؟”",
+
+  "Tips and reminders" :
+   "نصائح وتذكيرات",
+
+  "Tips: The flash turns on for currency. Show medicine packaging clearly. Hold steady when reading." :
+   "نصائح: يتم تشغيل الفلاش للعملات. عرض عبوة الدواء بوضوح. امسك الهاتف بثبات عند القراءة.",
+
+  "Error messages" :
+   "رسائل الخطأ",
+
+  "Errors include: “Camera error”, “No barcode found”, or “Unable to identify”. Try again if that happens." :
+   "تشمل الأخطاء: “خطأ في الكاميرا”، “لم يتم العثور على باركود”، أو “تعذر التعرف”. حاول مرة أخرى إذا حدث ذلك.",
+
+  "Language support" :
+   "دعم اللغات",
+
+  "AYN supports English and Arabic. Change the language in Settings." :
+   "يدعم عين اللغتين الإنجليزية والعربية. يمكنك تغيير اللغة من الإعدادات.",
+
+  "Help reminder" :
+   "تذكير المساعدة",
+
+  "Need help? Double-tap Help or ask your question with voice." :
+   "تحتاج إلى مساعدة؟ اضغط مرتين على المساعدة أو اسأل سؤالك باستخدام الصوت.",
+
+  "Encouragement" :
+   "تشجيعات",
+
+  "Enjoy using Visual Assistant AYN to explore the world more independently and confidently." :
+   "استمتع باستخدام مساعد الرؤية عين لاستكشاف العالم بشكل أكثر استقلالية وثقة.",
+
+  "Close instructions" :
+   "إغلاق التعليمات",
+
+  "Double tap to close instructions dialog" :
+   "اضغط مرتين لإغلاق حوار التعليمات",
+
+  "Close" :
+   "إغلاق",
 };
