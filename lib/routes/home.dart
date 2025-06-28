@@ -76,7 +76,7 @@ class _HomePageState extends State<HomePage>
   Future<void> detectLanguage() async {
     prefs = await SharedPreferences.getInstance();
     isEnglish = await prefs!.getString("language") == "EN";
-    // await prefs!.setBool("first_time", true);
+    await prefs!.setBool("first_time", true);
     String msg = translate("Picture Describe tab", isEnglish: isEnglish ?? true);
     msg = "${translate(" selected", isEnglish: isEnglish ?? true)} $msg";
     _announceToScreenReader(msg);
@@ -562,9 +562,17 @@ class _HomePageState extends State<HomePage>
               _announceToScreenReader(
                 translate("Instructions opened. Please scroll through every instructions given.", isEnglish: isEnglish ?? true),
               );
-              setState(() {
-                _showInstructionsDialog = true;
-              });
+                setState(() {
+                  _showInstructionsDialog = true;
+                });
+              if(_showInstructionsDialog == true){
+                instructionsModal(context, translate, isEnglish, () {
+                  setState(() {
+                    _showInstructionsDialog = false;
+                  });
+                  Navigator.of(context).pop();
+                });
+              }
             },
           ),
         ),
@@ -1099,13 +1107,6 @@ class _HomePageState extends State<HomePage>
                 ],
               ),
             ),
-              if(_showInstructionsDialog)
-                instructionsModal(context, translate, isEnglish, () {
-                  setState(() {
-                    _showInstructionsDialog = false;
-                  });
-                  Navigator.of(context).pop();
-                }),
           ],
         ),
       ),
