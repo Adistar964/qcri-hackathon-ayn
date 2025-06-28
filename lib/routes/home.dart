@@ -148,8 +148,9 @@ class _HomePageState extends State<HomePage>
     );
     _initializeControllerFuture = _cameraController!
         .initialize()
-        .then((_) {
+        .then((_) async {
           SemanticsBinding.instance.ensureSemantics();
+          await _cameraController!.setFocusMode(FocusMode.auto);
         })
         .catchError((error) {
           if (error is CameraException) {
@@ -530,8 +531,8 @@ class _HomePageState extends State<HomePage>
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.black,
-      foregroundColor: Colors.white,
+      backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+      foregroundColor: Colors.red,
       toolbarHeight: 70,
       actionsPadding: EdgeInsets.symmetric(horizontal: 30),
       leading: Semantics(
@@ -573,9 +574,7 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildCameraPreview() {
     if (_initializeControllerFuture == null) {
-      return Semantics(
-        excludeSemantics: true,
-        label: translate('Camera loading', isEnglish: isEnglish ?? true),
+      return ExcludeSemantics(
         child: Container(
           color: Colors.black,
           alignment: Alignment.center,
@@ -594,7 +593,19 @@ class _HomePageState extends State<HomePage>
             return Semantics(
               excludeSemantics: true,
               label: translate('Live camera preview', isEnglish: isEnglish ?? true),
-              child: CameraPreview(_cameraController!),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _cameraController!.value.previewSize!.height,
+                      height: _cameraController!.value.previewSize!.width,
+                      child: CameraPreview(_cameraController!),
+                    ),
+                  ),
+                ],
+              ),
             );
           } else if (snapshot.connectionState == ConnectionState.waiting) {
             return Semantics(
@@ -650,85 +661,89 @@ class _HomePageState extends State<HomePage>
         container: true,
         label: translate('Camera controls', isEnglish: isEnglish ?? true),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 36.0, horizontal: 10),
+          color: const Color.fromARGB(100, 0, 0, 0),
+          padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 10),
           child: SafeArea(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                Semantics(
-                  excludeSemantics: true,
-                  button: true,
-                  label: translate('Voice chat', isEnglish: isEnglish ?? true),
-                  hint: translate('Double tap to activate voice chat', isEnglish: isEnglish ?? true),
-                  child: IconButton(
-                    icon: Icon(
-                      _isListening ? Icons.mic : Icons.mic_none,
-                      color: Colors.white,
-                      size: 40,
-                    ),
-                    onPressed: () {
-                      _startVoiceChat();
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: Semantics(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 0.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Semantics(
                     excludeSemantics: true,
                     button: true,
-                    label: currentMode == "video"
-                        ? (_isRecording
-                              ? translate("Stop video recording", isEnglish: isEnglish ?? true)
-                              : translate("Start video recording", isEnglish: isEnglish ?? true))
-                        : translate('Take picture', isEnglish: isEnglish ?? true),
-                    hint: currentMode == "video"
-                        ? (_isRecording
-                              ? translate("Double tap to stop video recording", isEnglish: isEnglish ?? true)
-                              : translate("Double tap to start video recording", isEnglish: isEnglish ?? true))
-                        : translate('Double tap to capture an image', isEnglish: isEnglish ?? true),
-                    child: GestureDetector(
-                      onTap: () async {
-                        if (currentMode == "video") {
-                          if (_isRecording) {
-                            print("stopped video recording");
-                            _stopVideoRecordingAndSend();
-                          } else {
-                            print("started video recording");
-                            _startVideoRecording();
-                          }
-                        } else {
-                          print('Take picture tapped');
-                          await _takePicture();
-                        }
+                    label: translate('Voice chat', isEnglish: isEnglish ?? true),
+                    hint: translate('Double tap to activate voice chat', isEnglish: isEnglish ?? true),
+                    child: IconButton(
+                      icon: Icon(
+                        _isListening ? Icons.mic : Icons.mic_none,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                      onPressed: () {
+                        _startVoiceChat();
                       },
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _cameraController?.value.isInitialized == true
-                              ? Colors.white
-                              : Colors.grey,
-                          border: Border.all(
-                            color:
-                                _cameraController?.value.isInitialized == true
-                                ? Colors.grey
-                                : Colors.grey[700]!,
-                            width: 4.0,
-                          ),
-                        ),
-                        child: Center(
-                          child: Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
+                    ),
+                  ),
+                  Expanded(
+                    child: Semantics(
+                      excludeSemantics: true,
+                      button: true,
+                      label: currentMode == "video"
+                          ? (_isRecording
+                                ? translate("Stop video recording", isEnglish: isEnglish ?? true)
+                                : translate("Start video recording", isEnglish: isEnglish ?? true))
+                          : translate('Take picture', isEnglish: isEnglish ?? true),
+                      hint: currentMode == "video"
+                          ? (_isRecording
+                                ? translate("Double tap to stop video recording", isEnglish: isEnglish ?? true)
+                                : translate("Double tap to start video recording", isEnglish: isEnglish ?? true))
+                          : translate('Double tap to capture an image', isEnglish: isEnglish ?? true),
+                      child: GestureDetector(
+                        onTap: () async {
+                          if (currentMode == "video") {
+                            if (_isRecording) {
+                              print("stopped video recording");
+                              _stopVideoRecordingAndSend();
+                            } else {
+                              print("started video recording");
+                              _startVideoRecording();
+                            }
+                          } else {
+                            print('Take picture tapped');
+                            await _takePicture();
+                          }
+                        },
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _cameraController?.value.isInitialized == true
+                                ? Colors.white
+                                : Colors.grey,
+                            border: Border.all(
                               color:
                                   _cameraController?.value.isInitialized == true
-                                  ? Colors.white
-                                  : Colors.grey[300]!,
-                              border: Border.all(
-                                color: Colors.black,
-                                width: 2.0,
+                                  ? Colors.grey
+                                  : Colors.grey[700]!,
+                              width: 4.0,
+                            ),
+                          ),
+                          child: Center(
+                            child: Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color:
+                                    _cameraController?.value.isInitialized == true
+                                    ? Colors.white
+                                    : Colors.grey[300]!,
+                                border: Border.all(
+                                  color: Colors.black,
+                                  width: 2.0,
+                                ),
                               ),
                             ),
                           ),
@@ -736,48 +751,48 @@ class _HomePageState extends State<HomePage>
                       ),
                     ),
                   ),
-                ),
-                Semantics(
-                  excludeSemantics: true,
-                  button: true,
-                  label: translate('Change camera', isEnglish: isEnglish ?? true),
-                  // hint: translate('Double tap to switch between front and back camera', isEnglish: isEnglish ?? true),
-                  // onTap: () async {
-                  //   final currentCameraIndex = _cameras.indexOf(
-                  //     _cameraController!.description,
-                  //   );
-                  //   final nextCameraIndex = (currentCameraIndex + 1) % 2;
-                  //   await _initCamera(nextCameraIndex);
-                  //   _announceToScreenReader(
-                  //     nextCameraIndex == 0
-                  //       ? translate("Now facing the default rear camera", isEnglish: isEnglish ?? true)
-                  //       : translate("Now facing the selfie camera", isEnglish: isEnglish ?? true),
-                  //   );
-                  //   // setState(() => _currentCameraIndex = nextCameraIndex); // Update tracked index
-                  // },
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.cameraswitch,
-                      color: Colors.white,
-                      size: 40,
+                  Semantics(
+                    excludeSemantics: true,
+                    button: true,
+                    label: translate('Change camera', isEnglish: isEnglish ?? true),
+                    // hint: translate('Double tap to switch between front and back camera', isEnglish: isEnglish ?? true),
+                    // onTap: () async {
+                    //   final currentCameraIndex = _cameras.indexOf(
+                    //     _cameraController!.description,
+                    //   );
+                    //   final nextCameraIndex = (currentCameraIndex + 1) % 2;
+                    //   await _initCamera(nextCameraIndex);
+                    //   _announceToScreenReader(
+                    //     nextCameraIndex == 0
+                    //       ? translate("Now facing the default rear camera", isEnglish: isEnglish ?? true)
+                    //       : translate("Now facing the selfie camera", isEnglish: isEnglish ?? true),
+                    //   );
+                    //   // setState(() => _currentCameraIndex = nextCameraIndex); // Update tracked index
+                    // },
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.cameraswitch,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                      // onPressed: (){},
+                      onPressed: () async {
+                        final currentCameraIndex = _cameras.indexOf(
+                          _cameraController!.description,
+                        );
+                        final nextCameraIndex = (currentCameraIndex + 1) % 2;
+                        await _initCamera(nextCameraIndex);
+                        _announceToScreenReader(
+                          nextCameraIndex == 0
+                            ? translate("Now facing the default rear camera", isEnglish: isEnglish ?? true)
+                            : translate("Now facing the selfie camera", isEnglish: isEnglish ?? true),
+                        );
+                        // setState(() => _currentCameraIndex = nextCameraIndex); // Update tracked index
+                      },
                     ),
-                    // onPressed: (){},
-                    onPressed: () async {
-                      final currentCameraIndex = _cameras.indexOf(
-                        _cameraController!.description,
-                      );
-                      final nextCameraIndex = (currentCameraIndex + 1) % 2;
-                      await _initCamera(nextCameraIndex);
-                      _announceToScreenReader(
-                        nextCameraIndex == 0
-                          ? translate("Now facing the default rear camera", isEnglish: isEnglish ?? true)
-                          : translate("Now facing the selfie camera", isEnglish: isEnglish ?? true),
-                      );
-                      // setState(() => _currentCameraIndex = nextCameraIndex); // Update tracked index
-                    },
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -818,10 +833,11 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildModeButtons(List<String> modesToDisplay) {
     return Semantics(
-      container: true,
+      enabled: false,
+      container: false,
       label: translate('Mode selection controls', isEnglish: isEnglish ?? true),
       child: Container(
-        color: Colors.black,
+        color: const Color.fromARGB(50, 0, 0, 0),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -835,6 +851,7 @@ class _HomePageState extends State<HomePage>
                   vertical: 15,
                 ),
                 child: Semantics(
+                  enabled: false,
                   button: true,
                   label: '${translate(mode, isEnglish: isEnglish ?? true)}${translate(" mode", isEnglish: isEnglish ?? true)}',
                   hint: isSelected
@@ -953,51 +970,131 @@ class _HomePageState extends State<HomePage>
         )
         .toList();
     return Semantics(
-      container: true,
+      enabled: false,
+      container: false,
       label: translate('Main screen with camera preview, controls, and mode selection',isEnglish: isEnglish ?? true),
       child: Scaffold(
-        appBar: _buildAppBar(),
+        // appBar: _buildAppBar(),
         body: Column(
           children: [
             Expanded(
               child: Stack(
                 children: [
                   Positioned.fill(child: _buildCameraPreview()),
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildBottomControls(),
-                        SizedBox(
-                          height: 88,
-                          child: Semantics(
-                            label: translate('Tab bar for mode categories',isEnglish: isEnglish ?? true),
-                            child: Container(
-                              color: Colors.black,
-                              child: TabBar(
-                                controller: _tabController,
-                                indicatorColor: Colors.cyan,
-                                labelColor: Colors.cyan,
-                                labelStyle: TextStyle(fontSize: 20),
-                                unselectedLabelColor: Colors.white,
-                                tabs: [
-                                  Tab(text: translate("Describe",isEnglish: isEnglish ?? true)),
-                                  Tab(text: translate("Read",isEnglish: isEnglish ?? true)),
-                                  Tab(text: translate("More",isEnglish: isEnglish ?? true)),
-                                ],
+                  // Inline AppBar at the top, above the bottom-aligned column
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: SafeArea(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        height: 70,
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(0, 0, 0, 0),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Semantics(
+                              excludeSemantics: true,
+                              button: true,
+                              label: translate('Open settings', isEnglish: isEnglish ?? true),
+                              child: IconButton(
+                                padding: EdgeInsets.zero,
+                                iconSize: 40,
+                                icon: const Icon(Icons.settings, color: Colors.white),
+                                onPressed: () {
+                                  _announceToScreenReader(translate("Settings opened", isEnglish: isEnglish ?? true));
+                                },
                               ),
                             ),
-                          ),
+                            Semantics(
+                              excludeSemantics: true,
+                              button: true,
+                              label: translate('Instructions', isEnglish: isEnglish ?? true),
+                              child: IconButton(
+                                iconSize: 40,
+                                icon: const Icon(Icons.help_outline, color: Colors.white),
+                                onPressed: () {
+                                  _announceToScreenReader(
+                                    translate("Instructions opened. Please scroll through every instructions given.", isEnglish: isEnglish ?? true),
+                                  );
+                                  setState(() {
+                                    _showInstructionsDialog = true;
+                                  });
+                                  if (_showInstructionsDialog) {
+                                    instructionsModal(context, translate, isEnglish, () {
+                                      setState(() {
+                                        _showInstructionsDialog = false;
+                                      });
+                                      Navigator.of(context).pop();
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(
-                          height: 100,
-                          child: _tabController!.index == 2
-                              ? _buildModeButtons(otherModes)
-                              : Container(color: Colors.black),
-                        ),
-                      ],
+                      ),
                     ),
+                  ),
+                  Positioned(
+                    bottom: 213,
+                    left: 0,
+                    right: 0,
+                    child: SizedBox(
+                      height: 80,
+                      child: Container(
+                        color: const Color.fromARGB(100, 0, 0, 0),
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: allModes.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 12),
+                          itemBuilder: (context, index) {
+                            final mode = allModes[index];
+                            final bool isSelected = mode == currentMode;
+                            return Semantics(
+                              button: true,
+                              label: '${translate(mode, isEnglish: isEnglish ?? true)}${translate(" mode", isEnglish: isEnglish ?? true)}',
+                              hint: isSelected
+                                  ? translate('Currently selected', isEnglish: isEnglish ?? true)
+                                  : '${translate("Double tap to activate ", isEnglish: isEnglish ?? true)}${translate(mode.toLowerCase(), isEnglish: isEnglish ?? true)}${translate(" mode", isEnglish: isEnglish ?? true)}',
+                              child: ExcludeSemantics(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? Colors.cyan.withOpacity(0.2) : Colors.transparent,
+                                    border: Border.all(
+                                      color: isSelected ? Colors.cyan : Colors.transparent,
+                                      width: isSelected ? 3 : 0,
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: IconButton(
+                                    icon: Icon(
+                                      modeIcon(mode),
+                                      color: isSelected ? Colors.cyan : Colors.white,
+                                      size: 30,
+                                      semanticLabel: '',
+                                    ),
+                                    onPressed: () async {
+                                      await AnnounceCurrentMode(mode);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: _buildBottomControls(),
                   ),
                 ],
               ),
