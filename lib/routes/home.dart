@@ -75,7 +75,7 @@ class _HomePageState extends State<HomePage>
     
   Future<void> detectLanguage() async {
     prefs = await SharedPreferences.getInstance();
-    isEnglish = await prefs!.getString("language") == "EN";
+    isEnglish = await prefs!.getString("language") != "EN";
     // await prefs!.setBool("first_time", true);
     String msg = translate("Picture Describe tab", isEnglish: isEnglish ?? true);
     msg = "$msg ${translate(" selected", isEnglish: isEnglish ?? true)}";
@@ -447,9 +447,20 @@ class _HomePageState extends State<HomePage>
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
         final productName =
-            result["product"]?["product_name"] ?? translate("Product not found.", isEnglish: isEnglish ?? true);
-        print(productName);
-        _announceToScreenReader(productName);
+            result["product"]?["product_name"];
+            // result["product"]?["product_name"] ?? translate("Product not found.", isEnglish: isEnglish ?? true);
+        final brands =
+            result["product"]?["brands"];
+        final nutriments =
+            result["product"]?["nutriments"];
+        final ingredients_text =
+            result["product"]?["ingredients_text"];
+        // print(productName);
+        String query = translate("Return only the product name from the following JSON with no extra words or explanation:", isEnglish: isEnglish??true);
+        query = "$query {'product_name':$productName, 'nutriments':$nutriments, 'ingredients':$ingredients_text}"; 
+        await callFanarAPI(query: query);
+
+        // _announceToScreenReader(productName);
       } else {
         print("product not found");
         _announceToScreenReader(translate("Product not found.", isEnglish: isEnglish ?? true));
@@ -935,6 +946,9 @@ class _HomePageState extends State<HomePage>
 
   Future<void> _sendVoiceToFanar(String userQuery) async {
     String prompt = translate("You are an assistive AI designed to help blind users. Always answer clearly, concisely. When responding, act as a guide for someone who cannot see the screen. Use simple and accessible language. If any previous questions or context are available, use them to enhance the accuracy and relevance of your response.\nUser question: ", isEnglish: isEnglish ?? true);
+    if(currentMode == "barcode"){
+        prompt = translate("Only strictly answer what the user asked , do not include extra commments or explanations, user question:", isEnglish: isEnglish??true);
+    }
     prompt = "$prompt $userQuery";
     await callFanarAPI(query: prompt);
   }

@@ -58,8 +58,8 @@ final Map languageMap = {
   "You are an assistive AI for blind users. Please describe the contents of this image in detail, including objects, people, text, and any relevant context. Be concise, clear, and helpful.":
    "أنت ذكاء اصطناعي مساعد للمستخدمين المكفوفين. يرجى وصف محتويات هذه الصورة بالتفصيل، بما في ذلك الأشياء والأشخاص والنصوص وأي سياق ذي صلة. كن موجزًا وواضحًا ومفيدًا.",
 
-  "Extract and return the exact text from this document without any modifications, summaries, or added commentary. Preserve original formatting (e.g., line breaks, lists) to ensure screen-reader compatibility. If the document includes images or tables, provide their alt text or describe their structure. Do not alter, abbreviate, or paraphrase any content.":
-   "استخرج وأرجع النص الدقيق من هذا المستند دون أي تعديلات أو ملخصات أو تعليقات إضافية. حافظ على التنسيق الأصلي (مثل فواصل الأسطر والقوائم) لضمان التوافق مع قارئ الشاشة. إذا كان المستند يتضمن صورًا أو جداول، فقدم نصًا بديلاً لها أو صف هيكلها. لا تقم بتغيير أو اختصار أو إعادة صياغة أي محتوى.",
+  "Only Give me all the text in this picture and do not rephrase anything.":
+  "فقط أعطني كل النص الموجود في هذه الصورة ولا تعيد صياغة أي شيء.",
 
   '"If the paper is green, return “1 Qatari Riyal”; if purple or violet, return “5 Qatari Riyals”; if blue, return “10 Qatari Riyals”; if orange, return “50 Qatari Riyals”; if brown, return “200 Qatari Riyals”; if teal or blue-green, return “100 Qatari Riyals”; if red, return “500 Qatari Riyals”."':
    "أنت خبير في الكشف عن العملات الورقية. قم بتحليل صورة الإدخال و:\n1. **تحديد الفئة** (على سبيل المثال، 1، 5، 10، 20، 50، 100).\n2. **اكتشاف اسم العملة** باللغة الإنجليزية الرسمية الكاملة (على سبيل المثال، \"US Dollars\"، \"Qatari Riyals\"، \"Euros\").\n3. **تنسيق الإخراج**: استخدم بدقة: `<الفئة> <اسم_العملة>` \nمثال: \"10 US Dollars\" أو \"50 Qatari Riyals\"\n**القواعد**:\n- إذا كانت الفئة/العملة غامضة، فأرجع \"Unknown\".\n- لا تستخدم أبدًا رموز العملات (مثل USD، EUR) أو الرموز (\$, 8).\n- إعطاء الأولوية للنص/التصميم المرئي على الأنماط الخلفية.\n- التعامل مع الأوراق النقدية الجزئية/المعاقة عن طريق فحص ميزات الأمان (الهولوغرامات، العلامات المائية).",
