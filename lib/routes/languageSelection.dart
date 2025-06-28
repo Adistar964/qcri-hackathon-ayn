@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -147,41 +148,40 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
 
   Widget languageButton(String label, String langCode) {
     return Semantics(
-      label: label == "EN"
-          ? "Select English Button"
-          : "حدد الزر العربي",
+      label: label == "EN" ? "Select English Button" : "حدد الزر العربي",
       button: true,
       child: GestureDetector(
-        onTap: () async {
-          // Feedback.forTap(context);
-
-          // if (label == 'EN') {
-          //   await _announceToScreenReader("English", direction: TextDirection.ltr);
-          // } else {
-          //   await _announceToScreenReader("العربية", direction: TextDirection.rtl);
-          // }
+        onTap: () {
           Feedback.forTap(context);
           setLanguage(langCode);
         },
-        // onDoubleTap: () {
-        //   Feedback.forLongPress(context);
-        //   setLanguage(langCode);
-        // },
         child: Container(
           width: double.infinity,
           height: 90,
           margin: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.grey[800],
-            borderRadius: BorderRadius.circular(20),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF0288D1), Color(0xFF03A9F4)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                offset: const Offset(0, 4),
+                blurRadius: 6,
+              ),
+            ],
           ),
           alignment: Alignment.center,
           child: Text(
             label,
             style: const TextStyle(
-              fontSize: 28,
+              fontSize: 30,
               fontWeight: FontWeight.bold,
               color: Colors.white,
+              letterSpacing: 1.2,
             ),
           ),
         ),
@@ -189,35 +189,64 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: FocusTraversalGroup(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Semantics(
-                header: true,
-                label: 'Language selection screen',
-                child: const Text(
-                  "Select Language",
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(height: 50),
-              languageButton("EN", "EN"),
-              const SizedBox(height: 30),
-              languageButton("AR", "AR"),
-            ],
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: Stack(
+      children: [
+        // Image background from assets
+        SizedBox.expand(
+          child: Image.asset(
+            'bg.jpg',
+            fit: BoxFit.cover,
           ),
         ),
-      ),
-    );
-  }
+
+        // Blur overlay
+        BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+          child: Container(
+            color: Colors.white.withOpacity(0.1), // Soft light overlay
+          ),
+        ),
+
+        // Foreground content (language selection)
+        SafeArea(
+          child: FocusTraversalGroup(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Semantics(
+                      header: true,
+                      label: 'Language selection screen',
+                      child: const Text(
+                        "Select Language",
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: 60),
+                    languageButton("EN", "EN"),
+                    const SizedBox(height: 40),
+                    languageButton("AR", "AR"),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
 }

@@ -76,7 +76,7 @@ class _HomePageState extends State<HomePage>
   Future<void> detectLanguage() async {
     prefs = await SharedPreferences.getInstance();
     isEnglish = await prefs!.getString("language") == "EN";
-    // await prefs!.setBool("first_time", true);
+    await prefs!.setBool("first_time", true);
     String msg = translate("Picture Describe tab", isEnglish: isEnglish ?? true);
     msg = "${translate(" selected", isEnglish: isEnglish ?? true)} $msg";
     _announceToScreenReader(msg);
