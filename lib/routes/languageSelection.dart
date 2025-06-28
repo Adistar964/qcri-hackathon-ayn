@@ -18,7 +18,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
   final String _welcomeMessageEn =
       "Welcome to AYN. Please select a language from the buttons given.";
   final String _welcomeMessageAr =
-      "مرحبًا بكم في أين. يرجى اختيار لغة من الأزرار المعروضة.";
+      "مرحبًا بكم في عين. يرجى اختيار لغة من الأزرار المعروضة.";
 
   Timer? _inactivityTimer;
 
