@@ -82,7 +82,7 @@ final Map languageMap = {
   "Video recorded. Please ask your question.":
    "تم تسجيل الفيديو. يُرجى طرح سؤالك.",
 
-  "You are a voice assistant for the blind. Describe the video briefly and clearly in Arabic or English. Avoid phrases like 'in the video'. Focus on useful details only.":
+  "You are a voice assistant for the blind. Describe the video briefly and clearly in English. Avoid phrases like 'in the video'. Focus on useful details only.":
    "أنت مساعد صوتي للمكفوفين. صف الفيديو باختصار ووضوح باللغتين العربية أو الإنجليزية. تجنب العبارات مثل 'في الفيديو'. ركز على التفاصيل المفيدة فقط.",
 
   "Error recording video.":
@@ -193,7 +193,7 @@ final Map languageMap = {
   "Speech recognition not available.":
    "التعرف على الكلام غير متاح.",
 
-  "You are an assistive AI designed to help blind users. Always answer clearly, concisely, and without visual references. If the user's question is unclear, ask for clarification. When responding, act as a guide for someone who cannot see the screen. Use simple and accessible language. If any previous questions or context are available, use them to enhance the accuracy and relevance of your response.\nUser question: ":
+  "You are an assistive AI designed to help blind users. Always answer clearly, concisely. When responding, act as a guide for someone who cannot see the screen. Use simple and accessible language. If any previous questions or context are available, use them to enhance the accuracy and relevance of your response.\nUser question: ":
   "أنت مساعد ذكي مصمم لمساعدة المستخدمين المكفوفين. أجب دائمًا بطريقة واضحة ومختصرة، وتجنب أي إشارات بصرية. إذا كان السؤال غير واضح، فاطلب توضيحًا. تحدث وكأنك ترشد شخصًا لا يمكنه رؤية الشاشة. استخدم لغة بسيطة وسهلة الفهم. إذا كانت هناك أسئلة أو سياق سابق، فاعتمد عليه لتحسين دقة وفائدة الإجابة.\n\nسؤال المستخدم:",
   
   "Main screen with camera preview, controls, and mode selection":
@@ -249,5 +249,14 @@ final Map languageMap = {
 
    "Explain this medicine in clear, simple spoken language: what it's for, how to use it, and any important warnings. Avoid medical jargon. Do not include phrases like 'here’s a simple explanation' or references to the user being blind. JSON:":
   "اشرح هذا الدواء بلغة عربية مبسطة وواضحة: ما استخدامه، وكيفية استعماله، والتحذيرات المهمة. تجنب المصطلحات الطبية المعقدة. لا تذكر عبارات مثل 'شرح لمستخدم كفيف' أو أي إشارات إلى المستخدم. JSON: ",
+
+  "Return only the product name from the following JSON with no extra words or explanation:":
+  "Return only the product name from the following JSON with no extra words or explanation:",
+
+  "Now facing the default rear camera":
+  "Now facing the default rear camera",
+
+  "Only strictly answer what the user asked , do not include extra commments or explanations, user question:":
+  "Only strictly answer what the user asked , do not include extra commments or explanations, user question:"
 
 };

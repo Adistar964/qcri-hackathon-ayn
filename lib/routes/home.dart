@@ -75,7 +75,7 @@ class _HomePageState extends State<HomePage>
     
   Future<void> detectLanguage() async {
     prefs = await SharedPreferences.getInstance();
-    isEnglish = await prefs!.getString("language") != "EN";
+    isEnglish = await prefs!.getString("language") == "EN";
     // await prefs!.setBool("first_time", true);
     String msg = translate("Picture Describe tab", isEnglish: isEnglish ?? true);
     msg = "${translate(" selected", isEnglish: isEnglish ?? true)} $msg";
@@ -376,7 +376,7 @@ class _HomePageState extends State<HomePage>
         await callFanarAPI(query: prompt, image: File(path), speakReponse: false);
         await callFanarAPI(query: "What is the the bill then? Answer in 3 words");
       } else if (currentMode == "outfit identifier") {
-        prompt = translate("Describe this outfit in terms of color, style, and use. Is it formal, casual, or something else? reply in only 1 sentence with 3 words at max", isEnglish: isEnglish ?? true);
+        prompt = translate("Describe this outfit in terms of color, style, and use. Is it formal, casual, or something else? reply in only 1 sentence", isEnglish: isEnglish ?? true);
         await callFanarAPI(query: prompt, image: File(path));
       } else if (currentMode == "medication identifier") {
         prompt = "Extract the medicine name from this box.\nYou must: \nIf the image is blurry or unclear, return exactly:\nUnable to identify medicine name. Please try again by placing the front of the box clearly in front of the camera.\nIf more than one box is shown, return exactly:\nMultiple medicine boxes detected. Please show only one medicine at a time.”";
@@ -422,7 +422,7 @@ class _HomePageState extends State<HomePage>
       print("Stopped recording: $_videoPath");
       _announceToScreenReader(translate("Video recorded. Please ask your question.", isEnglish: isEnglish ?? true));
       final String videoPromptEnglish =
-          translate("You are a voice assistant for the blind. Describe the video briefly and clearly in Arabic or English. Avoid phrases like 'in the video'. Focus on useful details only.", isEnglish: isEnglish ?? true);
+          translate("You are a voice assistant for the blind. Describe the video briefly and clearly in English. Avoid phrases like 'in the video'. Focus on useful details only.", isEnglish: isEnglish ?? true);
       await callFanarAPI(
         query: videoPromptEnglish,
         videoFile: File(_videoPath!),
@@ -564,14 +564,6 @@ class _HomePageState extends State<HomePage>
               setState(() {
                 _showInstructionsDialog = true;
               });
-              if(_showInstructionsDialog){
-                instructionsModal(context, translate, isEnglish, () {
-                  setState(() {
-                    _showInstructionsDialog = false;
-                  });
-                  Navigator.of(context).pop();
-                });
-              }
             },
           ),
         ),
@@ -847,7 +839,7 @@ class _HomePageState extends State<HomePage>
                   label: '${translate(mode, isEnglish: isEnglish ?? true)}${translate(" mode", isEnglish: isEnglish ?? true)}',
                   hint: isSelected
                       ? translate('Currently selected', isEnglish: isEnglish ?? true)
-                      : '${translate("Double tap to activate ", isEnglish: isEnglish ?? true)}${translate(mode.toLowerCase(), isEnglish: isEnglish ?? true)}${translate(" mode", isEnglish: isEnglish ?? true)}',
+                      : '${translate("Double tap to activate ", isEnglish: isEnglish ?? true)}${translate(mode, isEnglish: isEnglish ?? true)}${translate(" mode", isEnglish: isEnglish ?? true)}',
                   child: ExcludeSemantics(
                     child: Container(
                       decoration: BoxDecoration(
@@ -1010,6 +1002,13 @@ class _HomePageState extends State<HomePage>
                 ],
               ),
             ),
+              if(_showInstructionsDialog)
+                instructionsModal(context, translate, isEnglish, () {
+                  setState(() {
+                    _showInstructionsDialog = false;
+                  });
+                  Navigator.of(context).pop();
+                }),
           ],
         ),
       ),
