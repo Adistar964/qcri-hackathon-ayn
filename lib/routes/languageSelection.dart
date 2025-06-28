@@ -86,8 +86,8 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
     return Semantics(
       label: semanticsLabel,
       button: true,
+      onTap: () => setLanguage(langCode),
       child: GestureDetector(
-        onTap: () => setLanguage(langCode),
         child: Container(
           height: 60,
           margin: const EdgeInsets.symmetric(vertical: 10),
